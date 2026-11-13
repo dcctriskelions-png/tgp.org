@@ -183,13 +183,16 @@ body.auth .foot{color:var(--g500);margin-top:20px}
     <div class="fld"><label for="mid">Username *</label><span class="in"><i class="ico ico-user"></i><input id="mid" required autocomplete="username"></span></div>
     <div class="fld"><label for="dob">Password *</label><span class="in"><i class="ico ico-lock"></i><input id="dob" type="password" required autocomplete="current-password"></span></div>
     <button id="btn" type="submit" class="btn btn-lg btn-ic ico-login">Log in</button>
-    <div id="msg" class="message <?= expired ? 'error' : '' ?>"><?= expired ? 'Your session expired. Please log in again.' : '' ?></div>
+    <div id="msg" class="message"></div>
   </form>
 </main>
-<div class="alinks"><a href="<?!= webAppUrl ?>?page=login" target="_top"><i class="ico ico-back"></i> Member Log-in</a></div>
+<div class="alinks"><a href="MemberLogin.html" target="_top"><i class="ico ico-back"></i> Member Log-in</a></div>
 <div class="foot">&copy; 2026 Tau Gamma Phi &amp; Tau Gamma Sigma &mdash; Dipolog City Council. All rights reserved.</div>
+<script src="gas-shim.js"></script>
 <script>
-const WEB_APP_URL = <?!= JSON.stringify(webAppUrl) ?>;
+if (new URLSearchParams(location.search).get('expired')) {
+  const _m = document.getElementById('msg'); _m.className = 'message error'; _m.textContent = 'Your session expired. Please log in again.';
+}
 document.getElementById('f').addEventListener('submit', function (e) {
   e.preventDefault();
   const b = document.getElementById('btn'), m = document.getElementById('msg');
@@ -198,7 +201,8 @@ document.getElementById('f').addEventListener('submit', function (e) {
   google.script.run
     .withSuccessHandler(function (r) {
       if (!r || !r.success) return reset((r && r.message) || 'Log-in failed.');
-      window.top.location.href = WEB_APP_URL + '?page=dashboard&token=' + encodeURIComponent(r.token);
+      try { sessionStorage.setItem('tgp_token', r.token); sessionStorage.removeItem('tgp_info'); } catch (x) {}
+      location.href = 'Dashboard.html?token=' + encodeURIComponent(r.token);
     })
     .withFailureHandler(function (err) { reset('Error: ' + (err.message || 'Please try again.')); })
     .adminLogin({ username: document.getElementById('mid').value, password: document.getElementById('dob').value });
