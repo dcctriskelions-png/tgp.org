@@ -1,0 +1,35 @@
+<div class="ph"><span class="phi"><i class="ico ico-members"></i></span><div><h1>Members Master List</h1><p class="muted">Members with an assigned Member ID. Members without an ID are in the Pending tab.</p></div></div>
+<div id="mstat" class="muted"></div>
+<div class="bar"><div class="searchbox"><i class="ico ico-search"></i><input id="mq" placeholder="Search name, ID, chapter..."></div><span id="mcount" class="chip"></span><button class="btn dark btn-ic ico-refresh" onclick="loadMaster()">Refresh</button></div>
+<div class="wrap"><table id="mt"></table></div>
+<script>
+var MROWS = [], MCOLS = [], MSTAT = {};
+function loadMaster() {
+  var t = document.getElementById('mt');
+  t.innerHTML = '<tr><td>Loading...</td></tr>';
+  google.script.run
+    .withSuccessHandler(function (r) {
+      if (r && r.expired) return expired();
+      if (!r || !r.success) { t.innerHTML = '<tr><td>' + esc((r && r.message) || 'The server returned no data. Redeploy a New version and try again.') + '</td></tr>'; return; }
+      MCOLS = r.columns; MROWS = r.rows; MSTAT = r.stats || {}; drawMaster();
+    })
+    .withFailureHandler(function (e) { t.innerHTML = '<tr><td>Error: ' + esc(e.message) + '</td></tr>'; })
+    .getMasterList(TOKEN);
+}
+function drawMaster() {
+  var q = document.getElementById('mq').value.trim().toLowerCase();
+  var rows = MROWS.filter(function (r) { return !q || r.join(' ').toLowerCase().indexOf(q) !== -1; });
+  document.getElementById('mcount').textContent = rows.length + ' of ' + MROWS.length + ' members';
+  document.getElementById('mstat').textContent = 'Sheet "' + (MSTAT.sheet || '?') + '": ' + (MSTAT.sheetRows || 0) +
+    ' row(s) · ' + MROWS.length + ' with Member ID · ' + (MSTAT.pending || 0) + ' pending (no ID yet)';
+  var body = rows.map(function (r) {
+    return '<tr>' + r.map(function (v, i) {
+      return '<td>' + (i === 0 ? '<a target="_top" href="' + esc(WEB_APP_URL) + '?id=' + encodeURIComponent(v) + '&token=' + encodeURIComponent(TOKEN) + '">' + esc(v) + '</a>' : esc(v)) + '</td>';
+    }).join('') + '</tr>';
+  }).join('');
+  if (!body) body = '<tr><td colspan="' + MCOLS.length + '" style="padding:18px;color:#555">' +
+    (MROWS.length ? 'No members match your search.' : 'No members with a Member ID yet. Members saved from the Sample form have no ID until you assign one in the Pending tab.') + '</td></tr>';
+  document.getElementById('mt').innerHTML = '<thead><tr>' + MCOLS.map(function (c) { return '<th>' + esc(c) + '</th>'; }).join('') + '</tr></thead><tbody>' + body + '</tbody>';
+}
+document.getElementById('mq').oninput = drawMaster;
+</script>
