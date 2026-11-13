@@ -246,7 +246,7 @@ textarea{resize:vertical;min-height:84px}
   <header class="hero"><span class="logos " aria-hidden="true"><span class="lg lg-phi"></span><span class="lg lg-sigma"></span><span class="lg lg-tao"></span><span class="lg lg-tym"></span></span><h1>Tau Gamma Phi &amp; Tau Gamma Sigma<span>Membership Database System</span></h1><p>Dipolog City Council</p></header>
 
   <div class="container">
-    <nav class="qtabs" aria-label="Quick links"><a class="qtab" href="<?!= webAppUrl ?>?page=edit" target="_top"><span class="qi"><i class="ico ico-edit"></i></span><span class="qt"><b>Edit Your Member Profile</b><small>Update your existing record</small></span><i class="ico ico-chev-r qc"></i></a><a class="qtab" href="<?!= webAppUrl ?>?page=login" target="_top"><span class="qi"><i class="ico ico-login"></i></span><span class="qt"><b>Member Log-in</b><small>Open your member dashboard</small></span><i class="ico ico-chev-r qc"></i></a></nav>
+    <nav class="qtabs" aria-label="Quick links"><a class="qtab" href="Edit.html" target="_top"><span class="qi"><i class="ico ico-edit"></i></span><span class="qt"><b>Edit Your Member Profile</b><small>Update your existing record</small></span><i class="ico ico-chev-r qc"></i></a><a class="qtab" href="MemberLogin.html" target="_top"><span class="qi"><i class="ico ico-login"></i></span><span class="qt"><b>Member Log-in</b><small>Open your member dashboard</small></span><i class="ico ico-chev-r qc"></i></a></nav>
     
     <div id="msg" class="message"></div>
     <section class="sec"><h2><span class="hb"><i class="ico ico-user"></i></span>PERSONAL INFORMATION</h2>
@@ -413,6 +413,7 @@ textarea{resize:vertical;min-height:84px}
 
 <div class="foot">&copy; 2026 Tau Gamma Phi &amp; Tau Gamma Sigma &mdash; Dipolog City Council. All Rights Reserved.</div>
 
+<script src="gas-shim.js"></script>
 <script>
 function showMessage(text, type) {
   const box = document.getElementById('msg');
