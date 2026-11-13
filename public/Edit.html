@@ -189,11 +189,10 @@ body.auth .foot{color:var(--g500);margin-top:20px}
   </form>
   <p class="anote">After verification, your existing record will open so you can edit it.</p>
 </main>
-<div class="alinks"><a href="<?!= webAppUrl ?>" target="_top"><i class="ico ico-back"></i> Membership Form</a><a href="<?!= webAppUrl ?>?page=login" target="_top"><i class="ico ico-login"></i> Member Log-in</a></div>
+<div class="alinks"><a href="index.html" target="_top"><i class="ico ico-back"></i> Membership Form</a><a href="MemberLogin.html" target="_top"><i class="ico ico-login"></i> Member Log-in</a></div>
 <div class="foot">&copy; 2026 Tau Gamma Phi &amp; Tau Gamma Sigma &mdash; Dipolog City Council. All rights reserved.</div>
+<script src="gas-shim.js"></script>
 <script>
-    const WEB_APP_URL = <?!= JSON.stringify(webAppUrl) ?>;
-
     document.getElementById('verifyForm').addEventListener('submit', function (e) {
       e.preventDefault();
       const button = document.getElementById('verifyBtn');
@@ -219,8 +218,7 @@ body.auth .foot{color:var(--g500);margin-top:20px}
             button.textContent = 'VERIFY AND CONTINUE';
             return;
           }
-          window.top.location.href =
-            WEB_APP_URL + '?mode=edit&token=' + encodeURIComponent(result.token);
+          location.href = 'member-form.html?mode=edit&token=' + encodeURIComponent(result.token);
         })
         .withFailureHandler(function (error) {
           message.className = 'message error';
