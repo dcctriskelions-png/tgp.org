@@ -1,0 +1,269 @@
+<div class="ph"><span class="phi"><i class="ico ico-about"></i></span><div><h1>About Us &mdash; Manage Content</h1><p class="muted">Whatever you save here appears on the About Us page that members see after they log in. Write and format it like in Microsoft Word.</p></div></div>
+<style>
+.rtbar{display:flex;flex-wrap:wrap;gap:5px;align-items:center;padding:8px;background:linear-gradient(180deg,#1b1b1e,#0e0e10);border:1px solid #000;border-radius:var(--rs) var(--rs) 0 0;box-shadow:inset 0 -2px 0 rgba(212,175,55,.5);-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.rtb{min-width:34px;height:34px;padding:0 9px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);border-radius:8px;cursor:pointer;font:700 13px var(--font);display:inline-flex;align-items:center;justify-content:center;gap:5px;color:#e9e9ec;touch-action:manipulation;-webkit-tap-highlight-color:rgba(212,175,55,.45);transition:.12s}
+.rtb .ico{font-size:17px}.rtb:hover{background:rgba(212,175,55,.22);border-color:var(--gold);color:#fff}
+.rtb.on{background:linear-gradient(180deg,var(--gold2),var(--gold));border-color:var(--golddk);color:#17130a}.rtb:disabled{opacity:.4;cursor:not-allowed}
+.rtsel{height:34px;padding:0 28px 0 9px;border:1px solid rgba(255,255,255,.14);border-radius:8px;background-color:rgba(255,255,255,.08);color:#fff;font-size:12.5px;width:auto;max-width:136px;
+ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e8cd6b' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")}
+.rtsel option{color:#111;background:#fff}
+.rtsep{width:1px;height:22px;background:rgba(255,255,255,.18);margin:0 3px}
+.rtcol{display:inline-flex;align-items:center;gap:3px;height:34px;padding:0 5px 0 9px;border:1px solid rgba(255,255,255,.14);border-radius:8px;background:rgba(255,255,255,.08);color:#fff;font-size:14px;font-weight:800;cursor:pointer}
+input.rtc{width:24px;height:22px;padding:0;border:0;background:none;cursor:pointer;box-shadow:none}
+#aed{min-height:290px;max-height:60vh;overflow:auto;padding:16px;border:1px solid var(--g300);border-top:0;border-radius:0 0 var(--rs) var(--rs);background:#fff;font-size:14.5px;line-height:1.65;outline:none;color:#222}
+#aed:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(212,175,55,.22)}#aed:empty:before{content:attr(data-ph);color:var(--g500)}
+#asrc{display:none;width:100%;min-height:290px;font-family:Consolas,monospace;font-size:12px;border-radius:0 0 var(--rs) var(--rs);padding:12px}
+.rt{font-size:14px;line-height:1.65;color:#2d2d33;overflow-wrap:anywhere}.rt p,.rt div{margin:0 0 .6em}.rt ul,.rt ol{margin:.3em 0 .6em 1.6em;padding:0}.rt h1{font-size:1.5em;margin:.5em 0 .3em}.rt h2{font-size:1.25em;margin:.5em 0 .3em}.rt h3{font-size:1.1em;margin:.5em 0 .3em}
+.rt blockquote{margin:0 0 .6em 40px;padding:0}.rt hr{border:0;border-top:1px solid #bbb;margin:.8em 0}.rt a{color:var(--golddk2)}
+.sectionrow{background:#fff;border:1px solid var(--g200);border-left:4px solid var(--gold);border-radius:var(--r);padding:14px 16px;margin:0 0 12px;box-shadow:var(--sh1)}
+.sectionrow>b{font:800 14px var(--font);letter-spacing:.02em}
+.sectionrow .btn{padding:8px 12px;font-size:12px;margin:0 6px 0 0}
+.aform{padding:16px;margin-bottom:16px;border-left:4px solid var(--gold);box-shadow:var(--sh2)}
+@media(max-width:720px){.rtb{min-width:40px;height:40px}.rtsel{height:40px;max-width:150px;font-size:14px}.rtcol{height:40px}#aed{font-size:16px}}
+</style>
+<div class="bar"><button class="btn btn-ic ico-plus" onclick="editAbout(-1)">Add Section</button><button class="btn dark btn-ic ico-refresh" onclick="loadAbout()">Refresh</button><span id="amsg" style="font-size:13px;font-weight:700"></span></div>
+<div id="aform" class="box aform" style="display:none">
+  <label for="at">Section title</label><input id="at" maxlength="200" placeholder="Section title (e.g. Our History)" style="margin-bottom:12px">
+  <div class="rtbar" id="atb"><button type="button" class="rtb" data-c="undo" title="Undo (Ctrl+Z)"><i class="ico ico-undo"></i></button><button type="button" class="rtb" data-c="redo" title="Redo (Ctrl+Y)"><i class="ico ico-redo"></i></button><span class="rtsep"></span><select id="afmt" class="rtsel" title="Paragraph style"><option value="p">Normal</option><option value="h1">Heading 1</option><option value="h2">Heading 2</option><option value="h3">Heading 3</option><option value="blockquote">Quote</option></select><select id="afont" class="rtsel" title="Font"><option value="">Font</option><option>Arial</option><option>Times New Roman</option><option>Georgia</option><option>Verdana</option><option>Trebuchet MS</option><option>Tahoma</option><option>Calibri</option><option>Cambria</option><option>Garamond</option><option>Courier New</option><option>Comic Sans MS</option></select><select id="asize" class="rtsel" title="Font size"><option value="">Size</option><option value="2">Small</option><option value="3">Normal</option><option value="4">Large</option><option value="5">X-Large</option><option value="6">XX-Large</option></select><span class="rtsep"></span><button type="button" class="rtb" data-c="bold" title="Bold (Ctrl+B)"><b>B</b></button><button type="button" class="rtb" data-c="italic" title="Italic (Ctrl+I)"><i style="font-family:Georgia,serif">I</i></button><button type="button" class="rtb" data-c="underline" title="Underline (Ctrl+U)"><u>U</u></button><button type="button" class="rtb" data-c="strikeThrough" title="Strikethrough"><s>S</s></button><button type="button" class="rtb" data-c="subscript" title="Subscript">x<sub style="font-size:9px">2</sub></button><button type="button" class="rtb" data-c="superscript" title="Superscript">x<sup style="font-size:9px">2</sup></button><span class="rtsep"></span><label class="rtcol" title="Text color" style="margin:0;text-transform:none;letter-spacing:0"><span>A</span><input type="color" class="rtc" id="afc" value="#c00000"></label><label class="rtcol" title="Highlight color" style="margin:0;text-transform:none;letter-spacing:0"><span style="background:#ffec80;color:#111;padding:0 4px;border-radius:3px">ab</span><input type="color" class="rtc" id="abc" value="#ffff00"></label><span class="rtsep"></span><button type="button" class="rtb" data-c="justifyLeft" title="Align left" data-i="left"></button><button type="button" class="rtb" data-c="justifyCenter" title="Center" data-i="center"></button><button type="button" class="rtb" data-c="justifyRight" title="Align right" data-i="right"></button><button type="button" class="rtb" data-c="justifyFull" title="Justify" data-i="full"></button><span class="rtsep"></span><button type="button" class="rtb" data-c="insertUnorderedList" title="Bullet list"><i class="ico ico-list"></i></button><button type="button" class="rtb" data-c="insertOrderedList" title="Numbered list"><i class="ico ico-listol"></i></button><button type="button" class="rtb" data-c="outdent" title="Decrease indent"><i class="ico ico-outdent"></i></button><button type="button" class="rtb" data-c="indent" title="Increase indent"><i class="ico ico-indent"></i></button><button type="button" class="rtb" id="afl" title="First-line indent (on/off)">1st line</button><span class="rtsep"></span><button type="button" class="rtb" id="alink" title="Insert link"><i class="ico ico-link"></i></button><button type="button" class="rtb" data-c="unlink" title="Remove link"><i class="ico ico-unlink"></i></button><button type="button" class="rtb" data-c="insertHorizontalRule" title="Horizontal line"><i class="ico ico-hr"></i></button><button type="button" class="rtb" id="aclr" title="Clear formatting"><i class="ico ico-eraser"></i></button><span class="rtsep"></span><button type="button" class="rtb" id="asrcb" title="Edit the HTML code (like Notepad)"><i class="ico ico-code"></i></button></div>
+  <div id="aed" contenteditable="true" spellcheck="true" data-ph="Type or paste your content here..."></div>
+  <textarea id="asrc" spellcheck="false"></textarea>
+  <div id="acnt" style="font-size:12px;color:var(--g500);margin-top:6px">0 / 45,000 characters (including formatting)</div>
+  <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-ic ico-save" id="asave" onclick="saveAbout()">Save</button><button class="btn gray" onclick="closeAboutForm()">Cancel</button></div>
+</div>
+<div id="alist"></div>
+<script>
+var ASEC = [], AEDIT = '', ASRC = false, ASEL = null, AMAX = 45000;
+function amsg(t, ok) { var m = document.getElementById('amsg'); m.textContent = t; m.style.color = ok ? '#166534' : '#991b1b'; }
+function aCall(h) { return google.script.run.withSuccessHandler(function (r) { if (r && r.expired) return expired(); h(r); }).withFailureHandler(function (e) { amsg(e.message, false); }); }
+function aEd() { return document.getElementById('aed'); }
+
+function looksHtml(b) { return /<\/?(p|div|br|b|i|u|s|strong|em|ul|ol|li|h[1-4]|span|blockquote|a|hr|sub|sup)\b/i.test(b); }
+function toHtml(s) { if (s.html != null) return s.html; var b = String(s.body || ''); return looksHtml(b) ? cleanHtml(b) : esc(b).replace(/\n/g, '<br>'); }
+/* ---------- list of saved sections ---------- */
+function loadAbout() {
+  aCall(function (r) {
+    if (!r || !r.success) return amsg((r && r.message) || 'Failed to load.', false);
+    ASEC = r.sections;
+    document.getElementById('alist').innerHTML = ASEC.map(function (s, i) {
+      return '<div class="sectionrow"><b>' + esc(s.title) + '</b>' +
+        '<div class="rt" style="margin:8px 0 10px;max-height:260px;overflow:auto">' + toHtml(s) + '</div>' +
+        '<button class="btn gray" aria-label="Move up" onclick="moveAbout(' + i + ',-1)"><i class="ico ico-chev-u"></i></button><button class="btn gray" aria-label="Move down" onclick="moveAbout(' + i + ',1)"><i class="ico ico-chev-d"></i></button>' +
+        '<button class="btn dark btn-ic ico-edit" onclick="editAbout(' + i + ')">Edit</button><button class="btn red btn-ic ico-trash" onclick="delAbout(' + i + ')">Delete</button></div>';
+    }).join('') || '<div class="wrap" style="padding:16px;color:var(--g600)">No sections yet. Click “Add Section”.</div>';
+  }).getAboutContent(TOKEN);
+}
+
+/* ---------- safe HTML (browser side; the server cleans it again) ---------- */
+var A_TAGS = { P: 1, DIV: 1, BR: 1, B: 1, STRONG: 1, I: 1, EM: 1, U: 1, S: 1, STRIKE: 1, DEL: 1, SUB: 1, SUP: 1, UL: 1, OL: 1, LI: 1, H1: 1, H2: 1, H3: 1, H4: 1, BLOCKQUOTE: 1, SPAN: 1, A: 1, HR: 1 };
+var A_SKIP = { SCRIPT: 1, STYLE: 1, IFRAME: 1, OBJECT: 1, EMBED: 1, SVG: 1, MATH: 1, TEMPLATE: 1, NOSCRIPT: 1, TEXTAREA: 1, TITLE: 1, FORM: 1, HEAD: 1 };
+var LEN = '-?\\d{1,4}(\\.\\d{1,2})?(px|pt|em|rem|%)?', COL = '(#[0-9a-f]{3,8}|rgba?\\(\\s*\\d{1,3}\\s*(,\\s*\\d{1,3}\\s*){2}(,\\s*[0-9.]+\\s*)?\\)|[a-z]{3,20})';
+var A_FONTS = ['arial', 'helvetica', 'times new roman', 'georgia', 'courier new', 'verdana', 'trebuchet ms', 'tahoma', 'calibri', 'cambria', 'garamond', 'comic sans ms', 'serif', 'sans-serif', 'monospace'];
+var A_STYLE = {
+  'text-align': /^(left|right|center|justify)$/i, 'margin-left': new RegExp('^' + LEN + '$', 'i'), 'padding-left': new RegExp('^' + LEN + '$', 'i'),
+  'text-indent': new RegExp('^' + LEN + '$', 'i'), 'margin': new RegExp('^' + LEN + '( ' + LEN + '){0,3}$', 'i'),
+  'font-size': /^(xx-small|x-small|small|medium|large|x-large|xx-large|xxx-large|\d{1,3}(\.\d{1,2})?(px|pt|em|rem|%))$/i,
+  'font-weight': /^(normal|bold|[1-9]00)$/i, 'font-style': /^(normal|italic)$/i,
+  'text-decoration': /^(none|underline|line-through|underline line-through|line-through underline)$/i,
+  'text-decoration-line': /^(none|underline|line-through|underline line-through|line-through underline)$/i,
+  'color': new RegExp('^' + COL + '$', 'i'), 'background-color': new RegExp('^' + COL + '$', 'i')
+};
+function okFont(v) { return v.split(',').every(function (f) { return A_FONTS.indexOf(f.replace(/["']/g, '').trim().toLowerCase()) !== -1; }); }
+function copyClean(from, to) {
+  Array.prototype.forEach.call(from.childNodes, function (n) {
+    if (n.nodeType === 3) { to.appendChild(document.createTextNode(n.nodeValue)); return; }
+    if (n.nodeType !== 1 || A_SKIP[n.nodeName]) return;
+    if (!A_TAGS[n.nodeName]) { copyClean(n, to); return; }          // unknown tag: keep its text, drop the tag
+    var e = document.createElement(n.nodeName.toLowerCase());
+    if (n.nodeName === 'A') {
+      var h = (n.getAttribute('href') || '').replace(/[\u0000-\u0020]/g, '');
+      if (!/^(https?:\/\/|mailto:|tel:)/i.test(h)) { copyClean(n, to); return; }
+      e.setAttribute('href', n.getAttribute('href').trim()); e.setAttribute('target', '_blank'); e.setAttribute('rel', 'noopener noreferrer');
+    }
+    for (var p in A_STYLE) {
+      var v = (n.style && n.style.getPropertyValue(p) || '').replace(/\s+/g, ' ').replace(/\s*!important$/i, '').trim();
+      if (v && A_STYLE[p].test(v)) e.style.setProperty(p, v);
+    }
+    var ff = n.style && n.style.getPropertyValue('font-family'); if (ff && okFont(ff)) e.style.setProperty('font-family', ff);
+    if (n.nodeName !== 'BR' && n.nodeName !== 'HR') copyClean(n, e);
+    to.appendChild(e);
+  });
+}
+function cleanHtml(html) {
+  var doc = new DOMParser().parseFromString('<!DOCTYPE html><html><body>' + String(html || '') + '</body></html>', 'text/html');
+  var out = document.createElement('div'); copyClean(doc.body, out);
+  return out.innerHTML;
+}
+function emptyHtml(h) { return !/<hr\b/i.test(h) && !h.replace(/<[^>]*>/g, '').replace(/&nbsp;|\s/g, ''); }
+function currentHtml() { var h = cleanHtml(ASRC ? document.getElementById('asrc').value : aEd().innerHTML); return emptyHtml(h) ? '' : h; }
+
+/* ---------- editor ---------- */
+function saveSel() { var s = window.getSelection(); if (s.rangeCount && aEd().contains(s.anchorNode)) ASEL = s.getRangeAt(0).cloneRange(); }
+function restoreSel() { if (!ASEL) return; var s = window.getSelection(); s.removeAllRanges(); s.addRange(ASEL); }
+function ex(cmd, val) {
+  if (ASRC) return;
+  try { aEd().focus({ preventScroll: true }); } catch (e) { aEd().focus(); }
+  restoreSel();
+  try { document.execCommand('styleWithCSS', false, true); } catch (e) {}
+  document.execCommand(cmd, false, val == null ? null : val);
+  saveSel(); aState(); acount();
+}
+function aState() {
+  Array.prototype.forEach.call(document.querySelectorAll('#atb [data-c]'), function (b) {
+    var c = b.dataset.c, on = false;
+    if (/^(bold|italic|underline|strikeThrough|subscript|superscript|insertUnorderedList|insertOrderedList)$/.test(c)) {
+      try { on = document.queryCommandState(c); } catch (e) {}
+    } else if (/^justify/.test(c)) {
+      var blk = caretBlock(), al = blk ? (window.getComputedStyle(blk).textAlign || 'left') : 'left';
+      al = { start: 'left', '-webkit-left': 'left', '-webkit-center': 'center', '-webkit-right': 'right', end: 'right' }[al] || al;
+      on = al === { justifyLeft: 'left', justifyCenter: 'center', justifyRight: 'right', justifyFull: 'justify' }[c];
+    }
+    b.classList.toggle('on', !!on);
+  });
+}
+function acount() {
+  var n = (ASRC ? document.getElementById('asrc').value : aEd().innerHTML).length, el = document.getElementById('acnt');
+  el.textContent = n.toLocaleString() + ' / ' + AMAX.toLocaleString() + ' characters (including formatting)';
+  el.style.color = n > AMAX ? '#991b1b' : '#6b7280';
+}
+function aIcon(kind) {
+  var w = { left: [14, 9, 14, 9], center: [14, 8, 14, 8], right: [14, 9, 14, 9], full: [14, 14, 14, 14] }[kind], s = '<svg width="16" height="14" viewBox="0 0 16 14" aria-hidden="true">';
+  w.forEach(function (len, i) { var x = kind === 'center' ? (16 - len) / 2 : kind === 'right' ? 16 - len : 0; s += '<rect x="' + x + '" y="' + (i * 4 + 0.5) + '" width="' + len + '" height="1.6" fill="currentColor"/>'; });
+  return s + '</svg>';
+}
+Array.prototype.forEach.call(document.querySelectorAll('#atb [data-i]'), function (b) { b.innerHTML = aIcon(b.dataset.i); });
+// keep the text selection when a toolbar button is pressed (mouse AND touch)
+var atb = document.getElementById('atb');
+atb.addEventListener('mousedown', function (e) { if (e.target.closest('button')) e.preventDefault(); });
+['pointerdown', 'touchstart'].forEach(function (ev) { atb.addEventListener(ev, saveSel, { passive: true, capture: true }); });
+atb.addEventListener('click', function (e) {
+  var b = e.target.closest ? e.target.closest('button[data-c]') : null; if (!b) return;
+  var c = b.dataset.c;
+  if (/^justify/.test(c)) return alignBlocks({ justifyLeft: 'left', justifyCenter: 'center', justifyRight: 'right', justifyFull: 'justify' }[c]);
+  if (c === 'indent') return indentBlocks(40);
+  if (c === 'outdent') return indentBlocks(-40);
+  ex(c);
+});
+
+/* Paragraph tools (align, indent, first line) change the paragraph itself, so they work on every phone and keyboard */
+var BLK = 'p,div,h1,h2,h3,h4,li,blockquote';
+function curRange() {
+  var s = window.getSelection();
+  if (s.rangeCount && aEd().contains(s.anchorNode)) return s.getRangeAt(0);
+  return ASEL;                                   // the last place the cursor was
+}
+function wrapLoose() {                           // text typed straight into the editor gets a <div> so it can be formatted
+  var ed = aEd(), kids = Array.prototype.slice.call(ed.childNodes), group = [];
+  function flush() {
+    if (!group.length) return;
+    if (group.every(function (n) { return n.nodeType === 3 && !n.nodeValue.trim(); })) { group.forEach(function (n) { ed.removeChild(n); }); group = []; return; }
+    var d = document.createElement('div'); ed.insertBefore(d, group[0]); group.forEach(function (n) { d.appendChild(n); }); group = [];
+  }
+  kids.forEach(function (n) {
+    if (n.nodeType === 1 && /^(P|DIV|H1|H2|H3|H4|UL|OL|BLOCKQUOTE|HR)$/.test(n.nodeName)) flush(); else group.push(n);
+  });
+  flush();
+}
+function selBlocks() {
+  var ed = aEd();
+  if (!ed.firstChild) ed.innerHTML = '<div><br></div>';
+  var r = curRange();
+  wrapLoose();
+  var list = Array.prototype.filter.call(ed.querySelectorAll(BLK), function (el) { return !el.querySelector(BLK + ',ul,ol'); });
+  if (!list.length) return [];
+  if (!r || !ed.contains(r.startContainer)) return [list[list.length - 1]];
+  if (r.startContainer === ed || r.endContainer === ed) return r.collapsed ? [list[list.length - 1]] : list;
+  var hit = list.filter(function (el) { try { return r.intersectsNode(el); } catch (e) { return false; } });
+  return hit.length ? hit : [list[list.length - 1]];
+}
+function tidy(el) { if (!el.getAttribute('style')) el.removeAttribute('style'); }
+function alignBlocks(v) {
+  if (ASRC) return;
+  selBlocks().forEach(function (el) { el.style.textAlign = v; });
+  aState(); acount();
+}
+function indentBlocks(px) {
+  if (ASRC) return;
+  selBlocks().forEach(function (el) {
+    var n = Math.max(0, Math.min(400, (parseInt(el.style.marginLeft, 10) || 0) + px));
+    el.style.marginLeft = n ? n + 'px' : ''; tidy(el);
+  });
+  acount();
+}
+function caretBlock() {
+  var r = curRange(); if (!r) return null;
+  var n = r.startContainer; if (n && n.nodeType === 3) n = n.parentNode;
+  while (n && n !== aEd()) { if (n.matches && n.matches(BLK)) return n; n = n.parentNode; }
+  return null;
+}
+document.addEventListener('selectionchange', function () { if (document.activeElement === aEd()) { saveSel(); aState(); } });
+aEd().addEventListener('input', acount);
+aEd().addEventListener('keyup', aState); aEd().addEventListener('mouseup', aState);
+document.getElementById('afmt').onchange = function () { var v = this.value; ex('formatBlock', '<' + v + '>'); this.value = 'p'; };
+document.getElementById('afont').onchange = function () { if (this.value) ex('fontName', this.value); this.value = ''; };
+document.getElementById('asize').onchange = function () { if (this.value) ex('fontSize', this.value); this.value = ''; };
+document.getElementById('afc').oninput = function () { ex('foreColor', this.value); };
+document.getElementById('abc').oninput = function () { ex('hiliteColor', this.value); };
+document.getElementById('alink').onclick = function () {
+  saveSel();
+  var u = prompt('Link address (https://...):', 'https://'); if (!u) return;
+  u = u.trim();
+  if (!/^(https?:\/\/|mailto:|tel:)/i.test(u)) return alert('The link must start with https://, http://, mailto: or tel:');
+  var sel = window.getSelection();
+  if (!ASEL || ASEL.collapsed) { ex('insertHTML', '<a href="' + u.replace(/"/g, '%22') + '">' + esc(u) + '</a>'); } else ex('createLink', u);
+};
+document.getElementById('aclr').onclick = function () { ex('removeFormat'); ex('unlink'); };
+document.getElementById('afl').onclick = function () {     // Word-style first-line indent on the selected paragraph(s)
+  if (ASRC) return;
+  var list = selBlocks(); if (!list.length) return;
+  var on = !list[0].style.textIndent;
+  list.forEach(function (el) { el.style.textIndent = on ? '2em' : ''; tidy(el); });
+  acount();
+};
+aEd().addEventListener('paste', function (e) {            // pasted text from Word / websites is cleaned first
+  var cd = e.clipboardData; if (!cd) return;
+  var html = cd.getData('text/html');
+  if (html) { e.preventDefault(); document.execCommand('insertHTML', false, cleanHtml(html)); acount(); }
+});
+document.getElementById('asrcb').onclick = function () {   // switch between the formatted view and the HTML code
+  var src = document.getElementById('asrc'), ed = aEd();
+  if (!ASRC) {
+    src.value = cleanHtml(ed.innerHTML).replace(/<\/(p|div|h[1-4]|li|ul|ol|blockquote)>/gi, '</$1>\n');
+    ed.style.display = 'none'; src.style.display = 'block'; ASRC = true;
+    Array.prototype.forEach.call(document.querySelectorAll('#atb .rtb,#atb select,#atb input'), function (x) { if (x.id !== 'asrcb') x.disabled = true; });
+  } else {
+    ed.innerHTML = cleanHtml(src.value); src.style.display = 'none'; ed.style.display = 'block'; ASRC = false;
+    Array.prototype.forEach.call(document.querySelectorAll('#atb .rtb,#atb select,#atb input'), function (x) { x.disabled = false; });
+  }
+  this.classList.toggle('on', ASRC); acount();
+};
+document.getElementById('asrc').addEventListener('input', acount);
+
+/* ---------- add / edit / save ---------- */
+function setSourceMode(off) { if (ASRC && off) document.getElementById('asrcb').click(); }
+function editAbout(i) {
+  setSourceMode(true);
+  AEDIT = i < 0 ? '' : ASEC[i].id;
+  document.getElementById('at').value = i < 0 ? '' : ASEC[i].title;
+  aEd().innerHTML = i < 0 ? '' : cleanHtml(toHtml(ASEC[i]));
+  document.getElementById('aform').style.display = 'block';
+  ASEL = null; acount(); aState();
+  document.getElementById('at').focus();
+  document.getElementById('aform').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function closeAboutForm() { setSourceMode(true); document.getElementById('aform').style.display = 'none'; }
+function saveAbout() {
+  var html = currentHtml();
+  if (html.length > AMAX) return amsg('Too long: ' + html.length.toLocaleString() + ' of ' + AMAX.toLocaleString() + ' characters. Please shorten it or split it into two sections.', false);
+  var b = document.getElementById('asave'); b.disabled = true; amsg('Saving...', true);
+  aCall(function (r) {
+    b.disabled = false;
+    if (r && r.success) { closeAboutForm(); amsg('Saved', true); loadAbout(); }
+    else amsg((r && r.message) || 'Failed.', false);
+  }).saveAboutSection(TOKEN, AEDIT, document.getElementById('at').value, html);
+}
+function delAbout(i) {
+  if (!confirm('Delete "' + ASEC[i].title + '"?')) return;
+  aCall(function (r) { if (r && r.success) loadAbout(); else amsg((r && r.message) || 'Failed.', false); }).deleteAboutSection(TOKEN, ASEC[i].id);
+}
+function moveAbout(i, d) { aCall(function () { loadAbout(); }).moveAboutSection(TOKEN, ASEC[i].id, d); }
+</script>
