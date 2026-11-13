@@ -248,10 +248,10 @@ body.app{display:flex;min-height:100vh}
 </head>
 <body class="app">
 <aside id="side">
-  <div class="brand"><span class="logos " aria-hidden="true"><span class="lg lg-phi"></span><span class="lg lg-sigma"></span><span class="lg lg-tao"></span><span class="lg lg-tym"></span></span><div class="bt"><b><span class="l">Tau Gamma Phi &amp; Tau Gamma Sigma</span><span class="s">Dipolog City Council</span></b><small>Dipolog City Council</small><small class="mu"><?= userName ?><? if (isAdmin) { ?><i>Admin</i><? } ?></small></div></div>
-  <div class="who"><span class="av"><i class="ico ico-user"></i></span><span class="nm"><?= userName ?></span><? if (isAdmin) { ?><em>Admin</em><? } ?></div>
+  <div class="brand"><span class="logos " aria-hidden="true"><span class="lg lg-phi"></span><span class="lg lg-sigma"></span><span class="lg lg-tao"></span><span class="lg lg-tym"></span></span><div class="bt"><b><span class="l">Tau Gamma Phi &amp; Tau Gamma Sigma</span><span class="s">Dipolog City Council</span></b><small>Dipolog City Council</small><small class="mu"><span data-role="admin" style="display:contents"><i>Admin</i></span></small></div></div>
+  <div class="who"><span class="av"><i class="ico ico-user"></i></span><span class="nm"></span><span data-role="admin" style="display:contents"><em>Admin</em></span></div>
   <nav class="navs">
-<? if (isAdmin) { ?><a class="nav" id="navD" href="#" target="_top"><i class="ico ico-home"></i><span class="l">Dashboard</span><span class="s">Dashboard</span></a><? } else { ?><a class="nav" id="navA" href="#" target="_top"><i class="ico ico-about"></i><span class="l">About Us</span><span class="s">About</span></a><a class="nav" id="navG" href="#" target="_top"><i class="ico ico-gallery"></i><span class="l">Gallery</span><span class="s">Gallery</span></a><a class="nav" id="navC" href="#" target="_top"><i class="ico ico-cert"></i><span class="l">COL</span><span class="s">COL</span></a><? } ?><button class="nav on"><i class="ico ico-calendar"></i><span class="l">Activities</span><span class="s">Activities</span></button><? if (!isAdmin) { ?><a class="nav" id="prof" href="#" target="_top"><i class="ico ico-idcard"></i><span class="l">My Profile</span><span class="s">Profile</span></a><? } ?><button class="nav" id="out"><i class="ico ico-logout"></i><span>Log out</span></button>
+<span data-role="admin" style="display:contents"><a class="nav" id="navD" href="#" target="_top"><i class="ico ico-home"></i><span class="l">Dashboard</span><span class="s">Dashboard</span></a></span><span data-role="member" style="display:contents"><a class="nav" id="navA" href="#" target="_top"><i class="ico ico-about"></i><span class="l">About Us</span><span class="s">About</span></a><a class="nav" id="navG" href="#" target="_top"><i class="ico ico-gallery"></i><span class="l">Gallery</span><span class="s">Gallery</span></a><a class="nav" id="navC" href="#" target="_top"><i class="ico ico-cert"></i><span class="l">COL</span><span class="s">COL</span></a></span><button class="nav on"><i class="ico ico-calendar"></i><span class="l">Activities</span><span class="s">Activities</span></button><span data-role="member" style="display:contents"><a class="nav" id="prof" href="#" target="_top"><i class="ico ico-idcard"></i><span class="l">My Profile</span><span class="s">Profile</span></a></span><button class="nav" id="out"><i class="ico ico-logout"></i><span>Log out</span></button>
   </nav>
 </aside>
 <main id="main">
@@ -292,13 +292,16 @@ body.app{display:flex;min-height:100vh}
     <div class="box wrap"><table id="mineTbl"></table></div>
   </div>
 </main>
+<script src="gas-shim.js"></script>
+<script src="session.js"></script>
+<script>if (!tgpRequire(false)) { /* redirecting */ }</script>
 <script>
-var TOKEN = <?!= token ?>, ME = <?!= memberId ?>, IS_ADMIN = <?= isAdmin ?>, WEB_APP_URL = <?!= JSON.stringify(webAppUrl) ?>;
+var TOKEN = TGP_TOKEN, ME = TGP_INFO.id, IS_ADMIN = !!TGP_INFO.admin, WEB_APP_URL = APPS_SCRIPT_URL;
 var YM = '', NOW = '', ACTS = [], TYPES = ['Event', 'Activity', 'Community Service', 'Meeting', 'Gathering', 'Other'], SEL = '', SHOW = [], EDIT = '';
 var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 function $(id) { return document.getElementById(id); }
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
-function goLogin() { window.top.location.href = WEB_APP_URL + (IS_ADMIN ? '?page=admin' : '?page=login'); }
+function goLogin() { tgpClear(); location.href = IS_ADMIN ? 'AdminLogin.html' : 'MemberLogin.html'; }
 function say(t, ok) { var m = $('msg'); m.textContent = t; m.style.color = ok ? '#166534' : '#991b1b'; if (t) setTimeout(function () { if (m.textContent === t) m.textContent = ''; }, 6000); }
 function call(h) { return google.script.run.withSuccessHandler(function (r) { if (r && r.expired) return goLogin(); h(r); }).withFailureHandler(function (e) { say(e.message, false); }); }
 function fmtT(t) { if (!t) return ''; var p = t.split(':'), h = +p[0]; return ((h + 11) % 12 + 1) + ':' + p[1] + ' ' + (h >= 12 ? 'PM' : 'AM'); }
@@ -306,10 +309,10 @@ function fmtD(d) { var p = d.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]
 function fmtDur(m) { if (m == null) return '—'; return (m >= 60 ? Math.floor(m / 60) + 'h ' : '') + (m % 60) + 'm'; }
 
 // ---- sidebar links ----
-if ($('navD')) $('navD').href = WEB_APP_URL + '?page=dashboard&token=' + encodeURIComponent(TOKEN);
-if ($('navA')) $('navA').href = WEB_APP_URL + '?page=about&token=' + encodeURIComponent(TOKEN);
-if ($('navG')) $('navG').href = WEB_APP_URL + '?page=about&view=gallery&token=' + encodeURIComponent(TOKEN);
-if ($('navC')) $('navC').href = WEB_APP_URL + '?page=col&token=' + encodeURIComponent(TOKEN);
+if ($('navD')) $('navD').href = pg('dashboard');
+if ($('navA')) $('navA').href = pg('about');
+if ($('navG')) $('navG').href = pg('about', { view: 'gallery' });
+if ($('navC')) $('navC').href = pg('col');
 if ($('prof')) $('prof').href = WEB_APP_URL + '?id=' + encodeURIComponent(ME);
 $('out').onclick = function () { google.script.run.withSuccessHandler(goLogin).withFailureHandler(goLogin).memberLogout(TOKEN); };
 
