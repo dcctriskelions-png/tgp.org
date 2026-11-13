@@ -197,11 +197,11 @@ document.getElementById('f').addEventListener('submit', function (e) {
   e.preventDefault();
   const b = document.getElementById('btn'), m = document.getElementById('msg');
   function reset(text) { m.className = 'message error'; m.textContent = text; b.disabled = false; b.textContent = 'LOG IN'; }
-  b.disabled = true; b.textContent = 'CHECKING...'; m.className = 'message info'; m.textContent = 'Verifying...';
+  b.disabled = true; b.textContent = 'CHECKING...'; m.className = 'message info'; m.textContent = 'Verifying... this can take a few seconds.';
   google.script.run
     .withSuccessHandler(function (r) {
       if (!r || !r.success) return reset((r && r.message) || 'Log-in failed.');
-      try { sessionStorage.setItem('tgp_token', r.token); sessionStorage.removeItem('tgp_info'); } catch (x) {}
+      try { sessionStorage.setItem('tgp_token', r.token); if (r.info) sessionStorage.setItem('tgp_info', JSON.stringify({ token: r.token, info: r.info })); else sessionStorage.removeItem('tgp_info'); } catch (x) {}
       location.href = 'Dashboard.html?token=' + encodeURIComponent(r.token);
     })
     .withFailureHandler(function (err) { reset('Error: ' + (err.message || 'Please try again.')); })
