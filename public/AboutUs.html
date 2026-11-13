@@ -231,16 +231,19 @@ section.box>h2::after{content:"";position:absolute;left:0;bottom:-1px;width:56px
 .gp>div.ph0{height:156px;padding:0;display:grid;place-items:center;font-size:34px;color:var(--golddk);background:linear-gradient(135deg,#f5f1e2,#ebe5d0)}
 
 </style>
+<script src="gas-shim.js"></script>
+<script src="session.js"></script>
+<script>if (!tgpRequire(false)) { /* redirecting */ }</script>
 <script>
-const WEB_APP_URL = <?!= JSON.stringify(webAppUrl) ?>, TOKEN = <?!= token ?>, MEMBER_ID = <?!= memberId ?>, START = <?!= JSON.stringify(startView) ?>;
+const WEB_APP_URL = APPS_SCRIPT_URL, TOKEN = TGP_TOKEN, MEMBER_ID = TGP_INFO.id, START = (new URLSearchParams(location.search).get('view') === 'gallery' ? 'g' : 'a');
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
-function goLogin() { window.top.location.href = WEB_APP_URL + '?page=login'; }
+function goLogin() { tgpClear(); location.href = 'MemberLogin.html'; }
 </script>
 </head>
 <body class="app">
 <aside id="side">
-  <div class="brand"><span class="logos " aria-hidden="true"><span class="lg lg-phi"></span><span class="lg lg-sigma"></span><span class="lg lg-tao"></span><span class="lg lg-tym"></span></span><div class="bt"><b><span class="l">Tau Gamma Phi &amp; Tau Gamma Sigma</span><span class="s">Dipolog City Council</span></b><small>Dipolog City Council</small><small class="mu"><?= userName ?></small></div></div>
-  <div class="who"><span class="av"><i class="ico ico-user"></i></span><span class="nm"><?= userName ?></span></div>
+  <div class="brand"><span class="logos " aria-hidden="true"><span class="lg lg-phi"></span><span class="lg lg-sigma"></span><span class="lg lg-tao"></span><span class="lg lg-tym"></span></span><div class="bt"><b><span class="l">Tau Gamma Phi &amp; Tau Gamma Sigma</span><span class="s">Dipolog City Council</span></b><small>Dipolog City Council</small><small class="mu"></small></div></div>
+  <div class="who"><span class="av"><i class="ico ico-user"></i></span><span class="nm"></span></div>
   <nav class="navs">
 <button class="nav on" id="navA"><i class="ico ico-about"></i><span class="l">About Us</span><span class="s">About</span></button><button class="nav" id="navG"><i class="ico ico-gallery"></i><span class="l">Gallery</span><span class="s">Gallery</span></button><a class="nav" id="navC" href="#" target="_top"><i class="ico ico-cert"></i><span class="l">COL</span><span class="s">COL</span></a><a class="nav" id="navAct" href="#" target="_top"><i class="ico ico-calendar"></i><span class="l">Activities</span><span class="s">Activities</span></a><a class="nav" id="prof" href="#" target="_top"><i class="ico ico-idcard"></i><span class="l">My Profile</span><span class="s">Profile</span></a><button class="nav" id="out"><i class="ico ico-logout"></i><span>Log out</span></button>
   </nav>
@@ -346,8 +349,8 @@ function loadGalleryView(albumId) {
 document.getElementById('navA').onclick = function () { showView('a'); };
 document.getElementById('navG').onclick = function () { showView('g'); };
 showView(START === 'g' ? 'g' : 'a');
-document.getElementById('navC').href = WEB_APP_URL + '?page=col&token=' + encodeURIComponent(TOKEN);
-document.getElementById('navAct').href = WEB_APP_URL + '?page=activities&token=' + encodeURIComponent(TOKEN);
+document.getElementById('navC').href = pg('col');
+document.getElementById('navAct').href = pg('activities');
 document.getElementById('prof').href = WEB_APP_URL + '?id=' + encodeURIComponent(MEMBER_ID);
 document.getElementById('out').onclick = function () {
   google.script.run.withSuccessHandler(goLogin).withFailureHandler(goLogin).memberLogout(TOKEN);
