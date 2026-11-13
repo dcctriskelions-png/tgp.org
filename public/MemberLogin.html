@@ -183,13 +183,16 @@ body.auth .foot{color:var(--g500);margin-top:20px}
     <div class="fld"><label for="mid">Member ID *</label><span class="in"><i class="ico ico-idcard"></i><input id="mid" required autocomplete="username" placeholder="7100-000-0000-00000"></span></div>
     <div class="fld"><label for="dob">Birthdate *</label><span class="in"><i class="ico ico-calendar"></i><input id="dob" type="date" required></span></div>
     <button id="btn" type="submit" class="btn btn-lg btn-ic ico-login">Log in</button>
-    <div id="msg" class="message <?= expired ? 'error' : '' ?>"><?= expired ? 'Your session expired. Please log in again.' : '' ?></div>
+    <div id="msg" class="message"></div>
   </form>
 </main>
-<div class="alinks"><a href="<?!= webAppUrl ?>" target="_top"><i class="ico ico-back"></i> Membership Form</a><a href="<?!= webAppUrl ?>?page=admin" target="_top"><i class="ico ico-shield"></i> Admin log-in</a></div>
+<div class="alinks"><a href="index.html" target="_top"><i class="ico ico-back"></i> Membership Form</a><a href="AdminLogin.html" target="_top"><i class="ico ico-shield"></i> Admin log-in</a></div>
 <div class="foot">&copy; 2026 Tau Gamma Phi &amp; Tau Gamma Sigma &mdash; Dipolog City Council. All rights reserved.</div>
+<script src="gas-shim.js"></script>
 <script>
-const WEB_APP_URL = <?!= JSON.stringify(webAppUrl) ?>;
+if (new URLSearchParams(location.search).get('expired')) {
+  const _m = document.getElementById('msg'); _m.className = 'message error'; _m.textContent = 'Your session expired. Please log in again.';
+}
 document.getElementById('f').addEventListener('submit', function (e) {
   e.preventDefault();
   const b = document.getElementById('btn'), m = document.getElementById('msg');
@@ -198,7 +201,8 @@ document.getElementById('f').addEventListener('submit', function (e) {
   google.script.run
     .withSuccessHandler(function (r) {
       if (!r || !r.success) return reset((r && r.message) || 'Log-in failed.');
-      window.top.location.href = WEB_APP_URL + '?page=about&token=' + encodeURIComponent(r.token);
+      try { sessionStorage.setItem('tgp_token', r.token); } catch (x) {}
+      location.href = 'AboutUs.html?token=' + encodeURIComponent(r.token);
     })
     .withFailureHandler(function (err) { reset('Error: ' + (err.message || 'Please try again.')); })
     .memberLogin({ memberId: document.getElementById('mid').value, dob: document.getElementById('dob').value });
