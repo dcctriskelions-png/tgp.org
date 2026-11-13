@@ -263,7 +263,7 @@ textarea{resize:vertical;min-height:84px}
     <section class="sec"><h2><span class="hb"><i class="ico ico-user"></i></span>PERSONAL INFORMATION</h2>
     <div class="row">
       <div class="col">
-        <label>MEMBER ID * &nbsp;    <a href="<?!= webAppUrl ?>?page=edit" target="_top" class="lnk-pill">Edit Your Member Profile</a></label>
+        <label>MEMBER ID * &nbsp;    <a href="Edit.html" target="_top" class="lnk-pill">Edit Your Member Profile</a></label>
         <input type="text" id="memberId" placeholder="Assigned by Admin" readonly>
       </div>
       <div class="col">
@@ -434,18 +434,20 @@ textarea{resize:vertical;min-height:84px}
         <a id="qrDownloadLink" class="btn dark btn-ic ico-download" href="#">DOWNLOAD QR</a>
       </div>
       <div class="qr-links">
-        <a class="btn gray btn-ic ico-clipboard" href="<?!= webAppUrl ?>" target="_top">MEMBERSHIP FORM</a>
-        <a class="btn dark btn-ic ico-login" href="<?!= webAppUrl ?>?page=login" target="_top">MEMBER LOG-IN</a>
+        <a class="btn gray btn-ic ico-clipboard" href="index.html" target="_top">MEMBERSHIP FORM</a>
+        <a class="btn dark btn-ic ico-login" href="MemberLogin.html" target="_top">MEMBER LOG-IN</a>
       </div>
     </div>
     <button class="btn btn-primary btn-ic ico-save" id="saveBtn" onclick="saveRecord()">SAVE NEW MEMBER</button>
   </div>
 <div class="foot">&copy; 2026 Tau Gamma Phi &amp; Tau Gamma Sigma &mdash; Dipolog City Council. All Rights Reserved.</div>
+<script src="gas-shim.js"></script>
 <script>
-const EDIT_MODE = <?!= editMode ? 'true' : 'false' ?>;
-const EDIT_MEMBER_ID = <?!= editMemberId ?>;
-const EDIT_TOKEN = <?!= editToken ?>;
-const EDIT_ROW = <?!= editRowJson ?>;
+const _Q = new URLSearchParams(location.search);
+const EDIT_MODE = _Q.get('mode') === 'edit';
+const EDIT_MEMBER_ID = "";
+const EDIT_TOKEN = _Q.get('token') || "";
+let EDIT_ROW = null;
 let EXISTING_RECORD_VIEW = false;
 let EDIT_HAD_ID = false;
 function setFormMode(mode) {
@@ -460,21 +462,24 @@ function setFormMode(mode) {
   EXISTING_RECORD_VIEW = locked;
 }
 function initPage() {
-  if (EDIT_MODE) {
-    document.getElementById('qrcodeSection').style.display = 'none';
-    document.getElementById('searchId').value = EDIT_MEMBER_ID;
+  if (!EDIT_MODE) { setFormMode('new'); return; }
+  document.getElementById('qrcodeSection').style.display = 'none';
+  document.getElementById('searchId').value = EDIT_MEMBER_ID;
+  setFormMode('view');
+  showMessage('Loading your details...', 'info');
+  google.script.run.withSuccessHandler(function (row) {
+    EDIT_ROW = row;
     if (!EDIT_ROW) {
-      setFormMode('view');
       showMessage('Your verification session expired. Please go back and verify again.', 'error');
       return;
     }
     populateMemberForm(EDIT_ROW);
-    EDIT_HAD_ID = !!String(EDIT_ROW[0]||'').trim();
+    EDIT_HAD_ID = !!String(EDIT_ROW[0] || '').trim();
     setFormMode('edit');
     showMessage('Identity verified. Your existing details are loaded. Edit only what needs changing.', 'success');
-  } else {
-    setFormMode('new');
-  }
+  }).withFailureHandler(function (err) {
+    showMessage('Could not load your details: ' + ((err && err.message) || 'server error'), 'error');
+  }).getEditRow(EDIT_TOKEN);
 }
 if (document.readyState === 'complete') initPage();
 else window.addEventListener('load', initPage);
