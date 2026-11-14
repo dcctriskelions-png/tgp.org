@@ -258,6 +258,12 @@ body.profile{min-height:100vh;padding:22px 14px 34px;color:#fff;
 @media(max-width:480px){.chapters-list{columns:1}.header-title{font-size:17px}.phead .lg{width:46px;height:46px}}
 
 </style>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#111111">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="TGP DCC">
+<script>if ("serviceWorker" in navigator) addEventListener("load", function () { navigator.serviceWorker.register("/sw.js"); });</script>
 </head>
 <body class="profile">
   <div class="pcard">
@@ -292,29 +298,11 @@ body.profile{min-height:100vh;padding:22px 14px 34px;color:#fff;
         <li>Dipolog City Chapter now Dip City Council</li>
         <li class="inactive">Dipolog Computer Systems Institute Chapter (Inactive)</li>
       </ul></div>
-    <a href="<?!= webAppUrl ?>?page=login" id="back-link" class="back-link" target="_top"><i class="ico ico-back"></i> Member Dashboard</a>
+    <a href="MemberLogin.html" id="back-link" class="back-link" target="_top"><i class="ico ico-back"></i> Member Dashboard</a>
   </div>
+<script src="gas-shim.js"></script>
 <script>
-const pageData = {
-  found: <?= found ? 'true' : 'false' ?>,
-  lastName: <?= jsonLn ?>,
-  firstName: <?= jsonFn ?>,
-  middleName: <?= jsonMn ?>,
-  dob: <?= jsonDob ?>,
-  alexisName: <?= jsonAn ?>,
-  batchName: <?= jsonBn ?>,
-  chapterInitiated: <?= jsonCi ?>,
-  dateInitiated: <?= jsonDi ?>,
-  gltDuringIR: <?= jsonGlt ?>,
-  mwwDuringIR: <?= jsonMww ?>,
-  chairmanDuringIR: <?= jsonChair ?>,
-  ggDuringIR: <?= jsonGg ?>,
-  positionHeld: <?= jsonPos ?>,
-  photoUrl: <?= jsonPhoto ?>,
-  employmentInfo: <?= jsonEmp ?>,
-  chapterAffiliated: <?= jsonCa ?>,
-  backUrl: <?= jsonBackUrl ?>
-};
+let pageData = { found: false };
 function formatDateFull(dateInput) {
   if (!dateInput || dateInput === '—' || dateInput === null) return '—';
   let dateObj;
@@ -369,6 +357,7 @@ function renderMultiValue(id, text) {
     ).join('');
   }
 }
+function render() {
 if (pageData.found) {
   setText('val-ln', pageData.lastName.toUpperCase());
   setText('val-fn', pageData.firstName.toUpperCase());
@@ -399,6 +388,35 @@ if (pageData.found) {
     '<div class="no-data"><i class="ico ico-alert"></i><div>Member record not found.<br>Please verify the link is correct.</div></div>';
   document.querySelector('.photo-container').style.display = 'none';
 }
+}
+
+function S(v) { return v == null ? '' : String(v); }
+function showNotFound(msg) {
+  document.getElementById('profile-content').innerHTML =
+    '<div class="no-data"><i class="ico ico-alert"></i><div>' + msg + '</div></div>';
+  document.querySelector('.photo-container').style.display = 'none';
+}
+(function () {
+  // "Member Dashboard" button: straight to the dashboard when someone is logged in
+  try {
+    var t = sessionStorage.getItem('tgp_token'), c = JSON.parse(sessionStorage.getItem('tgp_info') || 'null');
+    if (t && c && c.token === t && c.info) {
+      document.getElementById('back-link').href = (c.info.admin ? 'Dashboard.html' : 'AboutUs.html') + '?token=' + encodeURIComponent(t);
+    }
+  } catch (e) {}
+  var id = new URLSearchParams(location.search).get('id');
+  if (!id) return showNotFound('Member record not found.<br>Please verify the link is correct.');
+  google.script.run.withSuccessHandler(function (r) {
+    if (!r || !r.found) return showNotFound('Member record not found.<br>Please verify the link is correct.');
+    pageData = { found: true, lastName: S(r.ln), firstName: S(r.fn), middleName: S(r.mn), dob: S(r.dob), alexisName: S(r.an),
+      batchName: S(r.bn), chapterInitiated: S(r.ci), dateInitiated: S(r.di), gltDuringIR: S(r.glt), mwwDuringIR: S(r.mww),
+      chairmanDuringIR: S(r.chair), ggDuringIR: S(r.gg), positionHeld: S(r.pos), photoUrl: S(r.photo),
+      employmentInfo: S(r.emp), chapterAffiliated: S(r.ca) };
+    render();
+  }).withFailureHandler(function (e) {
+    showNotFound('Could not load this profile: ' + S(e && e.message).replace(/</g, '&lt;') + '<br>Please try again.');
+  }).getProfile(id);
+})();
 </script>
 </body>
 </html>
