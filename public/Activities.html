@@ -245,6 +245,12 @@ body.app{display:flex;min-height:100vh}
 
 </style>
 
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#111111">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="TGP DCC">
+<script>if ("serviceWorker" in navigator) addEventListener("load", function () { navigator.serviceWorker.register("/sw.js"); });</script>
 </head>
 <body class="app">
 <aside id="side">
@@ -313,7 +319,7 @@ if ($('navD')) $('navD').href = pg('dashboard');
 if ($('navA')) $('navA').href = pg('about');
 if ($('navG')) $('navG').href = pg('about', { view: 'gallery' });
 if ($('navC')) $('navC').href = pg('col');
-if ($('prof')) $('prof').href = WEB_APP_URL + '?id=' + encodeURIComponent(ME);
+if ($('prof')) $('prof').href = 'Profile.html?id=' + encodeURIComponent(ME);
 $('out').onclick = function () { google.script.run.withSuccessHandler(goLogin).withFailureHandler(goLogin).memberLogout(TOKEN); };
 
 // ---- tabs ----
