@@ -436,6 +436,12 @@ async function buildCertificatePdf(d, qrDataUrl, now) {
 }
 /*END GENERATOR*/
 </script>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#111111">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="TGP DCC">
+<script>if ("serviceWorker" in navigator) addEventListener("load", function () { navigator.serviceWorker.register("/sw.js"); });</script>
 </head>
 <body class="app">
 <aside id="side">
@@ -464,7 +470,7 @@ function say(t, ok) { var m = document.getElementById('msg'); m.textContent = t;
 document.getElementById('navA').href = pg('about');
 document.getElementById('navG').href = pg('about', { view: 'gallery' });
 document.getElementById('navAct').href = pg('activities');
-document.getElementById('prof').href = WEB_APP_URL + '?id=' + encodeURIComponent(MEMBER_ID);
+document.getElementById('prof').href = 'Profile.html?id=' + encodeURIComponent(MEMBER_ID);
 document.getElementById('out').onclick = function () { google.script.run.withSuccessHandler(goLogin).withFailureHandler(goLogin).memberLogout(TOKEN); };
 
 google.script.run
