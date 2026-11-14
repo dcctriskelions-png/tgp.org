@@ -439,6 +439,12 @@ function show(v) {
   document.querySelectorAll('.nav[data-v]').forEach(function (x) { x.classList.toggle('on', x.dataset.v === v); });
 }
 </script>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#111111">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="TGP DCC">
+<script>if ("serviceWorker" in navigator) addEventListener("load", function () { navigator.serviceWorker.register("/sw.js"); });</script>
 </head>
 <body class="app">
 <aside id="side">
@@ -477,7 +483,7 @@ function drawMaster() {
     ' row(s) · ' + MROWS.length + ' with Member ID · ' + (MSTAT.pending || 0) + ' pending (no ID yet)';
   var body = rows.map(function (r) {
     return '<tr>' + r.map(function (v, i) {
-      return '<td>' + (i === 0 ? '<a target="_top" href="' + esc(WEB_APP_URL) + '?id=' + encodeURIComponent(v) + '&token=' + encodeURIComponent(TOKEN) + '">' + esc(v) + '</a>' : esc(v)) + '</td>';
+      return '<td>' + (i === 0 ? '<a target="_top" href="' + 'Profile.html?id=' + encodeURIComponent(v) + '">' + esc(v) + '</a>' : esc(v)) + '</td>';
     }).join('') + '</tr>';
   }).join('');
   if (!body) body = '<tr><td colspan="' + MCOLS.length + '" style="padding:18px;color:#555">' +
@@ -940,3 +946,8 @@ if (IS_ADMIN) {
 }
 </script>
 </body></html>
+
+
+
+
+
