@@ -239,6 +239,12 @@ const WEB_APP_URL = APPS_SCRIPT_URL, TOKEN = TGP_TOKEN, MEMBER_ID = TGP_INFO.id,
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 function goLogin() { tgpClear(); location.href = 'MemberLogin.html'; }
 </script>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#111111">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="TGP DCC">
+<script>if ("serviceWorker" in navigator) addEventListener("load", function () { navigator.serviceWorker.register("/sw.js"); });</script>
 </head>
 <body class="app">
 <aside id="side">
@@ -351,7 +357,7 @@ document.getElementById('navG').onclick = function () { showView('g'); };
 showView(START === 'g' ? 'g' : 'a');
 document.getElementById('navC').href = pg('col');
 document.getElementById('navAct').href = pg('activities');
-document.getElementById('prof').href = WEB_APP_URL + '?id=' + encodeURIComponent(MEMBER_ID);
+document.getElementById('prof').href = 'Profile.html?id=' + encodeURIComponent(MEMBER_ID);
 document.getElementById('out').onclick = function () {
   google.script.run.withSuccessHandler(goLogin).withFailureHandler(goLogin).memberLogout(TOKEN);
 };
