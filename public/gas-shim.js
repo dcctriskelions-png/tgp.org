@@ -53,3 +53,11 @@
   window.google = window.google || {};
   window.google.script = { run: makeRunner(null, null) };
 })();
+
+/* Browser-tab logo: every page loads this file, so the icon is added here too. */
+(function () {
+  if (document.querySelector('link[rel~="icon"]')) return;
+  var l = document.createElement('link');
+  l.rel = 'icon'; l.type = 'image/png'; l.href = '/icons/favicon-32.png';
+  document.head.appendChild(l);
+})();
