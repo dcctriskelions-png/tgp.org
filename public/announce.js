@@ -21,11 +21,16 @@
 
   // ---------- styles + skeleton ----------
   var css = '' +
-  '#an-bell{position:fixed;z-index:99990;top:calc(10px + env(safe-area-inset-top,0px));right:12px;width:42px;height:42px;border-radius:50%;border:1px solid #6b5a22;background:#15151a;color:#e8b83a;display:grid;place-items:center;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.35);padding:0}' +
-  '#an-bell svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}' +
-  '#an-bell.ring svg{animation:an-ring 1.6s ease-in-out infinite;transform-origin:50% 8%}' +
-  '#an-badge{position:absolute;top:-4px;right:-4px;min-width:19px;height:19px;padding:0 5px;box-sizing:border-box;border-radius:10px;background:#d93025;color:#fff;font:700 11px/19px Arial,sans-serif;text-align:center;display:none;border:2px solid #15151a}' +
-  '#an-toast{position:fixed;z-index:99989;left:10px;right:64px;top:calc(10px + env(safe-area-inset-top,0px));background:#2a1a12;color:#ffe9d6;border:1px solid #d93025;border-radius:12px;padding:10px 12px;font:600 13px/1.35 Arial,sans-serif;display:none;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.4)}' +
+  '.an-float{position:fixed;z-index:99990;bottom:calc(120px + env(safe-area-inset-bottom,0px));right:12px;width:42px;height:42px;border-radius:50%;border:1px solid #6b5a22;background:#15151a;color:#e8b83a;display:grid;place-items:center;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.35);padding:0;font-size:22px}' +
+  '.an-float .badge{position:absolute;top:-4px;right:-4px;min-width:19px;height:19px;padding:0 5px;box-sizing:border-box;border-radius:10px;font:700 11px/19px Arial,sans-serif;text-align:center;border:2px solid #15151a}' +
+  '#an-bell .an-ico{display:inline-flex;align-items:center;justify-content:center;line-height:0}' +
+  '#an-bell svg{width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}' +
+  '#an-bell.ring .an-ico svg{animation:an-ring 1.6s ease-in-out infinite;transform-origin:50% 8%}' +
+  '#an-bell .badge{background:#d93025!important;color:#fff!important;box-shadow:0 0 0 2px #17171a}' +
+  '.navs.an-tight .nav .ico,.navs.an-tight .an-ico{font-size:clamp(15px,4.6vw,18px)!important}' +
+  '.navs.an-tight .nav>span.s,.navs.an-tight #out span{font-size:clamp(8px,2.3vw,9.5px)!important;letter-spacing:0!important}' +
+  '.navs.an-tight .nav{padding-left:0!important;padding-right:0!important;gap:3px!important}' +
+  '#an-toast{position:fixed;z-index:99989;left:10px;right:64px;bottom:calc(120px + env(safe-area-inset-bottom,0px));background:#2a1a12;color:#ffe9d6;border:1px solid #d93025;border-radius:12px;padding:10px 12px;font:600 13px/1.35 Arial,sans-serif;display:none;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.4)}' +
   '#an-toast b{color:#ff9d8f}' +
   '#an-ov{position:fixed;z-index:99995;inset:0;background:rgba(0,0,0,.55);display:none}' +
   '#an-panel{position:fixed;z-index:99996;right:0;top:0;bottom:0;width:min(420px,100vw);background:#15151a;color:#f5f1e2;display:none;flex-direction:column;font-family:Arial,Helvetica,sans-serif;box-shadow:-8px 0 30px rgba(0,0,0,.5)}' +
@@ -49,15 +54,40 @@
   '.an-post{background:#e8b83a;color:#111;border:0;border-radius:9px;padding:10px 16px;font:700 13px Arial,sans-serif;cursor:pointer}.an-post:disabled{opacity:.6}' +
   '#an-msg{font-size:12px;margin:8px 0 0;min-height:14px}#an-msg.err{color:#ff9d8f}#an-msg.ok{color:#8fd99a}' +
   '@keyframes an-ring{0%,60%,100%{transform:rotate(0)}10%{transform:rotate(14deg)}20%{transform:rotate(-12deg)}30%{transform:rotate(9deg)}40%{transform:rotate(-6deg)}}' +
-  '@media(prefers-reduced-motion:reduce){#an-bell.ring svg{animation:none}}';
+  '@media(min-width:821px){.an-float{bottom:24px;right:24px}#an-toast{left:auto;right:80px;bottom:24px;width:340px}}' +
+  '@media(prefers-reduced-motion:reduce){#an-bell.ring .an-ico svg{animation:none}}';
+
+  var navs = null, ico = null;
+  var BELL_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>';
+
+  function fitDock() {
+    if (!navs || !ico) return;
+    var ref = navs.querySelector('.nav:not(.on):not(.an-nav) i.ico') || navs.querySelector('i.ico');
+    if (ref) { var cs = getComputedStyle(ref); ico.style.fontSize = cs.fontSize; ico.style.color = cs.color; }
+    var mobile = window.matchMedia('(max-width:820px)').matches, count = navs.children.length;
+    navs.classList.toggle('an-tight', mobile && count >= 7);               // 7 buttons in one row: make icons and captions a little smaller
+    if (mobile && getComputedStyle(navs).display === 'grid') navs.style.setProperty('grid-template-columns', 'repeat(' + count + ',minmax(0,1fr))', 'important');
+    else navs.style.removeProperty('grid-template-columns');
+  }
 
   function build() {
     var st = el('style'); st.id = 'an-style'; st.textContent = css; document.head.appendChild(st);
 
+    navs = document.querySelector('#side .navs') || document.querySelector('.navs');
     var bell = el('button'); bell.id = 'an-bell'; bell.type = 'button'; bell.setAttribute('aria-label', 'Announcements');
-    bell.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>';
-    var badge = el('span'); badge.id = 'an-badge'; bell.appendChild(badge);
-    bell.onclick = openPanel; document.body.appendChild(bell);
+    ico = el('span', 'an-ico'); ico.innerHTML = BELL_SVG;
+    var badge = el('span', 'badge an-badge'); badge.id = 'an-badge'; badge.style.display = 'none';
+    bell.appendChild(ico);
+    if (navs) {                                                              // inside the navigation bar, just before Log out
+      bell.className = 'nav an-nav';
+      bell.appendChild(el('span', 'l', 'Announcements')); bell.appendChild(el('span', 's', 'News')); bell.appendChild(badge);
+      var out = document.getElementById('out');
+      if (out && out.parentNode === navs) navs.insertBefore(bell, out); else navs.appendChild(bell);
+    } else {                                                                 // page without a navigation bar: floating bell
+      bell.className = 'an-float'; bell.appendChild(badge); document.body.appendChild(bell);
+    }
+    bell.onclick = openPanel;
+    fitDock(); window.addEventListener('resize', fitDock);
 
     var toast = el('div'); toast.id = 'an-toast'; toast.onclick = openPanel; document.body.appendChild(toast);
 
@@ -73,7 +103,7 @@
   // ---------- indicator ----------
   function updateIndicator() {
     var n = unread().length, badge = $('an-badge'), bell = $('an-bell'), toast = $('an-toast');
-    badge.style.display = n ? 'block' : 'none'; badge.textContent = n > 9 ? '9+' : String(n);
+    badge.style.display = n ? '' : 'none'; badge.textContent = n > 9 ? '9+' : String(n);
     var urgent = unread().filter(function (x) { return x.urgent; });
     bell.classList.toggle('ring', n > 0);
     if (!open && urgent.length) {
