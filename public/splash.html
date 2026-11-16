@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TGP DCC</title>
+<meta name="theme-color" content="#111111">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="manifest" href="/manifest.json">
+<style>
+  html, body { margin: 0; height: 100%; background: #111111; }
+  body { display: flex; align-items: center; justify-content: center; flex-direction: column;
+         min-height: 100vh; min-height: 100dvh; overflow: hidden; color: #f5f1e2;
+         font-family: Arial, Helvetica, sans-serif; text-align: center;
+         padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
+         box-sizing: border-box; animation: fadein .35s ease-out both; }
+  body.leave { animation: fadeout .3s ease-in both; }
+  img { width: 72vmin; height: 72vmin; max-width: 520px; max-height: 520px; object-fit: contain; }
+  h1 { margin: 18px 16px 0; font-size: clamp(15px, 4.2vmin, 24px); letter-spacing: 1.5px; color: #e8b83a; font-weight: 700; text-transform: uppercase; }
+  p  { margin: 6px 16px 0; font-size: clamp(11px, 3vmin, 15px); color: #cfc8b0; letter-spacing: .6px; }
+  .bar { width: min(46vw, 220px); height: 3px; margin-top: 26px; background: #2a2a2a; border-radius: 3px; overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 0; background: #e8b83a; animation: load 1.5s ease-in-out forwards; }
+  @keyframes load { to { width: 100%; } }
+  @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes fadeout { to { opacity: 0; } }
+</style>
+</head>
+<body>
+  <img src="/icons/splash-logo.png" alt="">
+  <h1>Dipolog City Council</h1>
+  <p>Membership Database System</p>
+  <div class="bar"><i></i></div>
+  <noscript><p><a href="/" style="color:#e8b83a">Continue</a></p></noscript>
+<script>
+  // Show the start-up screen briefly, then open the home page.
+  setTimeout(function () { document.body.className = 'leave'; }, 1300);
+  setTimeout(function () { location.replace('/'); }, 1600);
+</script>
+</body>
+</html>
