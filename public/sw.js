@@ -1,8 +1,8 @@
 /* Service worker: lets the site be installed and show a friendly page when offline.
    It never touches requests to Apps Script (member data always comes live from the server)
    and never stores pages whose address contains a login token. */
-var CACHE = 'tgp-v2';
-var SHELL = ['/offline.html', '/icons/icon-192.png', '/icons/icon-512.png', '/favicon.ico', '/gas-shim.js', '/session.js'];
+var CACHE = 'tgp-v3';
+var SHELL = ['/offline.html', '/splash.html', '/icons/splash-logo.png', '/icons/icon-192.png', '/icons/icon-512.png', '/favicon.ico', '/gas-shim.js', '/session.js'];
 
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(SHELL); }).then(function () { return self.skipWaiting(); }));
