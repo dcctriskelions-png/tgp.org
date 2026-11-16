@@ -448,14 +448,34 @@ function show(v) {
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
+<style id="mobile-fit">
+/* Phone fit: header and bottom bar scale with the screen width */
+@media(min-width:821px){.nav .s,.brand b .s,.brand small.mu{display:none}}
+@media(max-width:820px){
+  html,body{max-width:100%;overflow-x:hidden}
+  #side{padding:10px 56px 10px 12px;gap:8px}
+  #main{min-width:0;max-width:100%}
+  .brand{gap:8px;min-width:0}
+  .brand .logos{gap:3px;flex:none}
+  .brand .lg{width:clamp(22px,7vw,30px);height:clamp(22px,7vw,30px)}
+  .brand .bt{min-width:0;flex:1}
+  .brand b{display:block;font-size:clamp(9px,2.8vw,11px);letter-spacing:.06em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .brand small.mu{display:none}
+  .navs{left:8px;right:8px;gap:2px;padding:6px 4px}
+  .nav{padding:8px 2px;gap:3px;border-radius:14px}
+  .nav .ico{font-size:clamp(17px,5.2vw,20px)}
+  .nav .s{font-size:clamp(8.5px,2.6vw,10px);letter-spacing:.01em}
+  #out{width:36px;height:36px;right:10px}
+}
+</style>
 </head>
 <body class="app">
 <aside id="side">
-  <div class="brand"><span class="logos " aria-hidden="true"><span class="lg lg-phi"></span><span class="lg lg-sigma"></span><span class="lg lg-tao"></span><span class="lg lg-tym"></span></span><b>Tau Gamma Phi &amp; Tau Gamma Sigma</b><small>Dipolog City Council</small></div>
+  <div class="brand"><span class="logos " aria-hidden="true"><span class="lg lg-phi"></span><span class="lg lg-sigma"></span><span class="lg lg-tao"></span><span class="lg lg-tym"></span></span><div class="bt"><b><span class="l">Tau Gamma Phi &amp; Tau Gamma Sigma</span><span class="s">Dipolog City Council</span></b><small>Dipolog City Council</small></div></div>
   <div class="who"><span class="av"><i class="ico ico-user"></i></span><span class="nm"></span><em>Admin</em></div>
   <nav class="navs">
-    <button class="nav on" data-v="master"><i class="ico ico-members"></i><span>Members Master List</span></button>
-    <button class="nav" data-v="pending"><i class="ico ico-pending"></i><span>Pending</span><span class="badge" id="pcount">0</span></button><button class="nav" data-v="about"><i class="ico ico-about"></i><span>About Us Content</span></button><button class="nav" data-v="gallery"><i class="ico ico-gallery"></i><span>Gallery</span></button><a class="nav" id="navAct" href="#" target="_top"><i class="ico ico-calendar"></i><span>Activities</span></a>
+    <button class="nav on" data-v="master"><i class="ico ico-members"></i><span class="l">Members Master List</span><span class="s">Members</span></button>
+    <button class="nav" data-v="pending"><i class="ico ico-pending"></i><span class="l">Pending</span><span class="s">Pending</span><span class="badge" id="pcount">0</span></button><button class="nav" data-v="about"><i class="ico ico-about"></i><span class="l">About Us Content</span><span class="s">About</span></button><button class="nav" data-v="gallery"><i class="ico ico-gallery"></i><span class="l">Gallery</span><span class="s">Gallery</span></button><a class="nav" id="navAct" href="#" target="_top"><i class="ico ico-calendar"></i><span class="l">Activities</span><span class="s">Activities</span></a>
     <button class="nav" id="out"><i class="ico ico-logout"></i><span>Log out</span></button>
   </nav>
 </aside>
@@ -949,3 +969,8 @@ if (IS_ADMIN) {
 }
 </script>
 </body></html>
+
+
+
+
+
