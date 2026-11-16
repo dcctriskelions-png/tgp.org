@@ -4,37 +4,40 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>TGP DCC</title>
-<meta name="theme-color" content="#111111">
+<meta name="theme-color" content="#050608">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="manifest" href="/manifest.json">
 <style>
-  html, body { margin: 0; height: 100%; background: #111111; }
-  body { display: flex; align-items: center; justify-content: center; flex-direction: column;
-         min-height: 100vh; min-height: 100dvh; overflow: hidden; color: #f5f1e2;
-         font-family: Arial, Helvetica, sans-serif; text-align: center;
-         padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
-         box-sizing: border-box; animation: fadein .35s ease-out both; }
-  body.leave { animation: fadeout .3s ease-in both; }
-  img { width: 72vmin; height: 72vmin; max-width: 520px; max-height: 520px; object-fit: contain; }
-  h1 { margin: 18px 16px 0; font-size: clamp(15px, 4.2vmin, 24px); letter-spacing: 1.5px; color: #e8b83a; font-weight: 700; text-transform: uppercase; }
-  p  { margin: 6px 16px 0; font-size: clamp(11px, 3vmin, 15px); color: #cfc8b0; letter-spacing: .6px; }
-  .bar { width: min(46vw, 220px); height: 3px; margin-top: 26px; background: #2a2a2a; border-radius: 3px; overflow: hidden; }
-  .bar i { display: block; height: 100%; width: 0; background: #e8b83a; animation: load 1.5s ease-in-out forwards; }
-  @keyframes load { to { width: 100%; } }
+  :root { --t: 4s; }                      /* total time on screen, set by SPLASH_SECONDS below */
+  html, body { margin: 0; width: 100%; height: 100%; background: #050608; overflow: hidden; }
+  body { cursor: pointer; animation: fadein .5s ease-out both; }
+  body.leave { animation: fadeout .5s ease-in both; }
+  picture, img { display: block; width: 100vw; height: 100vh; height: 100dvh; }
+  img { object-fit: contain; background: #050608; animation: drift var(--t) ease-out both; }
+  @keyframes drift  { from { transform: scale(1.05); opacity: .85; } to { transform: scale(1); opacity: 1; } }
   @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
   @keyframes fadeout { to { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { img { animation: none; } }
 </style>
 </head>
-<body>
-  <img src="/icons/splash-logo.png" alt="">
-  <h1>Dipolog City Council</h1>
-  <p>Membership Database System</p>
-  <div class="bar"><i></i></div>
-  <noscript><p><a href="/" style="color:#e8b83a">Continue</a></p></noscript>
+<body onclick="go()">
+  <picture>
+    <source srcset="/icons/splash-art.webp" type="image/webp">
+    <img src="/icons/splash-art.jpg" alt="Tau Gamma Phi and Tau Gamma Sigma, Dipolog City Council - Membership Database System">
+  </picture>
+  <noscript><a href="/" style="position:fixed;bottom:20px;left:0;right:0;text-align:center;color:#e8b83a;font:16px Arial">Continue</a></noscript>
 <script>
-  // Show the start-up screen briefly, then open the home page.
-  setTimeout(function () { document.body.className = 'leave'; }, 1300);
-  setTimeout(function () { location.replace('/'); }, 1600);
+  // How long the start-up screen stays, in seconds. Change this number (3 to 5 works well).
+  var SPLASH_SECONDS = 5;
+
+  document.documentElement.style.setProperty('--t', SPLASH_SECONDS + 's');
+  var left = false;
+  function go() {
+    if (left) return; left = true;
+    document.body.className = 'leave';
+    setTimeout(function () { location.replace('/'); }, 450);
+  }
+  setTimeout(go, SPLASH_SECONDS * 1000);
 </script>
 </body>
 </html>
