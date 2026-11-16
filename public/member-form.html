@@ -357,14 +357,17 @@ textarea{resize:vertical;min-height:84px}
       <div class="col">
         <label>CHAPTER INITIATED / ROOT CHAPTER *</label>
        <select id="chapterInitiated">
-        <option value="">-- SELECT CHAPTER --</option>
+          <option value="">-- SELECT CHAPTER --</option>
           <option>Initiated Outside Dipolog City Council</option>
           <option>Andres Bonifacio College Chapter</option>
+          <option>Barra Community Chapter</option>
           <option>Biasong Community Chapter</option>
           <option>Central Community Chapter</option>
           <option>Cogon Community Chapter</option>
           <option>Dipolog City Institute of Technology Chapter (Inactive)</option>
+          <option>Dipolog Computer System Inc Chapter (Inactive)</option>
           <option>Dicayas Community Chapter</option>
+          <option>Dipolog City Chapter</option>
           <option>Diwan Community Chapter</option>
           <option>Dipolog Medical Center College Foundation Inc Chapter</option>
           <option>Estaka Community Chapter</option>
@@ -372,19 +375,24 @@ textarea{resize:vertical;min-height:84px}
           <option>Gulayon Community Chapter</option>
           <option>Igot Community Chapter (Inactive)</option>
           <option>Jose Rizal Memorial State University Chapter</option>
+          <option>Lugdungan Community Chapter</option>
           <option>Minaog Community Chapter (Inactive)</option>
           <option>Miputak Community Chapter</option>
           <option>Olingan Community Chapter</option>
           <option>Punta Community Chapter</option>
+          <option>Sangkol Community Chapter</option>
+          <option>San Jose Community Chapter</option>
           <option>Sicayab Community Chapter</option>
+          <option>Sinaman Community Chapter</option>
           <option>Sta. Filomena Community Chapter</option>
           <option>Sta. Isabel Community Chapter</option>
-          <option>St. Vincent's College Chapter Inc Chapter</option>
-          <option>Tau Gamma Sigma Dipolog City Chapter</option>
+          <option>St Vincent's College Inc Chapter</option>
+          <option>TGS Dipolog City Chapter</option>
+          <option>Triskelion League of Elders</option>
           <option>Turno Community Chapter</option>
-          <option>Dipolog City Chapter</option>
-          <option>Dipolog Computer Systems Institute Chapter (Inactive)</option>
+          <option>ZN TRILEG</option>
         </select>
+        <input type="text" id="rootChapterOutside" maxlength="150" autocomplete="off" style="display:none;margin-top:8px" placeholder="Please indicate your Root Chapter, City/Municipal Council, Provincial Council">
       </div>
       <div class="col">
         <label>DATE INITIATED *</label>
@@ -588,17 +596,37 @@ function resetPosRows() { document.getElementById('posContainer').innerHTML = ''
 var AFF_PLACEHOLDER = 'This will be your Official Affiliate Chapter of DCC';
 var AFF_TEXT_PLACEHOLDER = 'e.g. Any Chapters in Dipolog City Council, Special Units like: TRILEG, T.L.E., etc.';
 function isOutsideDCC() { return /^initiated outside/i.test(document.getElementById('chapterInitiated').value || ''); }
-function affChapterList() {          // same list as Chapter Initiated, without "Initiated Outside...", plus the Elders chapter
+// ---- Root chapter text box: shown only when "Initiated Outside Dipolog City Council" is selected ----
+function rootChapterText() { var e = document.getElementById('rootChapterOutside'); return e ? e.value.trim().replace(/\s+/g, ' ') : ''; }
+function syncRootOutside() {
+  var on = isOutsideDCC(), e = document.getElementById('rootChapterOutside');
+  e.style.display = on ? 'block' : 'none';
+  if (!on) e.value = '';
+}
+function chapterInitiatedValue() {   // saved in the same "Chapter Initiated" column: Initiated Outside Dipolog City Council: <what the member typed>
+  var v = document.getElementById('chapterInitiated').value.trim(), t = rootChapterText();
+  return (isOutsideDCC() && t) ? v + ': ' + t : v;
+}
+function setChapterInitiatedFromSaved(v) {   // restores a saved value, including the typed outside root chapter
+  var s = String(v == null ? '' : v).trim(), m = /^initiated outside dipolog city council\s*[:\-\u2013\u2014]\s*(.*)$/i.exec(s);
+  if (m) { setSelectCI('chapterInitiated', 'Initiated Outside Dipolog City Council'); syncRootOutside(); document.getElementById('rootChapterOutside').value = m[1].trim(); }
+  else { setSelectCI('chapterInitiated', mapOldChapter(s)); syncRootOutside(); }
+}
+function affChapterList() {          // same list as Chapter Initiated, without "Initiated Outside..."
   var list = [];
   Array.prototype.forEach.call(document.getElementById('chapterInitiated').options, function (o) {
     var t = o.textContent.trim();
     if (t && o.value !== '' && !/^initiated outside/i.test(t)) list.push(t);
   });
-  list.push('Triskelion League of Elders ZDN');
   return list;
 }
+var OLD_CHAPTER_NAMES = { "st. vincent's college chapter inc chapter": "St Vincent's College Inc Chapter",
+  "tau gamma sigma dipolog city chapter": "TGS Dipolog City Chapter", "triskelion league of elders zdn": "Triskelion League of Elders",
+  "dipolog computer systems institute chapter": "Dipolog Computer System Inc Chapter (Inactive)",
+  "dipolog city chapter now dip city council": "Dipolog City Chapter", "jose rizal memorial state university": "Jose Rizal Memorial State University Chapter" };
+function mapOldChapter(v) { var s = String(v == null ? '' : v).trim(); return OLD_CHAPTER_NAMES[s.replace(/\s*\(inactive\)\s*$/i, '').toLowerCase()] || s; }
 function setAffSelectValue(sel, val) {
-  var v = String(val || '').trim().toUpperCase();
+  var v = String(mapOldChapter(val) || '').trim().toUpperCase();
   if (!v) { sel.selectedIndex = 0; return; }
   for (var i = 0; i < sel.options.length; i++) {
     if (sel.options[i].value.trim().toUpperCase() === v) { sel.selectedIndex = i; return; }
@@ -661,6 +689,7 @@ function resetForm() {
   resetPosRows();
   document.getElementById('affContainer').innerHTML = '<div class="dynamic-row"><input type="text" class="affInput" style="flex:1;"><button class="btn-remove" onclick="removeRow(this)"><i class="ico ico-x"></i></button></div>';
   syncAffFirstRow();
+  syncRootOutside();
 }
 function photoMessage(text, type) {
   const box = document.getElementById('photoMsg');
@@ -751,7 +780,7 @@ function populateMemberForm(row) {
   document.getElementById('email').value = (row[8]||'').toString().trim();
   document.getElementById('alexisName').value = (row[9]||'').toString().trim();
   document.getElementById('batchName').value = (row[10]||'').toString().trim();
-  setSelectCI('chapterInitiated', row[11]);
+  setChapterInitiatedFromSaved(row[11]);
   document.getElementById('dateInitiated').value = toDateInput(row[12]);
   document.getElementById('gltDuringIR').value = (row[13]||'').toString().trim();
   document.getElementById('mwwDuringIR').value = (row[14]||'').toString().trim();
@@ -768,6 +797,7 @@ function populateMemberForm(row) {
   (row[28]||'').toString().split(';').filter(Boolean).forEach(v => addPrefilledRow('affContainer','affInput',v));
   if (!document.querySelector('#affContainer .affInput')) addRow('affContainer','affInput');
   syncAffFirstRow();
+  syncRootOutside();
 }
 function searchMember() {
   const id = document.getElementById('searchId').value.trim();
@@ -805,7 +835,7 @@ function saveRecord() {
     email: document.getElementById('email').value.trim(),
     alexisName: document.getElementById('alexisName').value.trim(),
     batchName: document.getElementById('batchName').value.trim(),
-    chapterInitiated: document.getElementById('chapterInitiated').value.trim(),
+    chapterInitiated: chapterInitiatedValue(),
     dateInitiated: document.getElementById('dateInitiated').value,
     gltDuringIR: document.getElementById('gltDuringIR').value.trim(),
     mwwDuringIR: document.getElementById('mwwDuringIR').value.trim(),
@@ -819,6 +849,12 @@ function saveRecord() {
   const posErr = checkPositions();
   if (posErr) {
     showMessage(posErr, 'error');
+    btn.disabled = false;
+    btn.textContent = EDIT_MODE ? 'SAVE PROFILE UPDATES' : 'SAVE NEW MEMBER';
+    return;
+  }
+  if (isOutsideDCC() && !rootChapterText()) {
+    showMessage('PLEASE INDICATE YOUR ROOT CHAPTER, CITY/MUNICIPAL COUNCIL, PROVINCIAL COUNCIL (the box under CHAPTER INITIATED).', 'error');
     btn.disabled = false;
     btn.textContent = EDIT_MODE ? 'SAVE PROFILE UPDATES' : 'SAVE NEW MEMBER';
     return;
@@ -903,6 +939,8 @@ function saveRecord() {
 }
 if (!document.querySelector('#posContainer .pos-row')) addPosRow();
 document.getElementById('chapterInitiated').addEventListener('change', syncAffFirstRow);
+document.getElementById('chapterInitiated').addEventListener('change', syncRootOutside);
+syncRootOutside();
 syncAffFirstRow();
 </script>
 </body>
