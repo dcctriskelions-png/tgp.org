@@ -333,7 +333,7 @@ async function buildCertificatePdf(d, qrDataUrl, now) {
   }
 
   var he = pronoun(d.gender), val = function (v) { return String(v == null ? '' : v).replace(/\s+/g, ' ').trim(); };
-  var chap = function (v) { v = val(v); return v ? (/chapter$/i.test(v) ? v.replace(/\s*chapter$/i, '') : v) : ''; };
+  var chap = function (v) { v = val(v).replace(/\s*\(inactive\)\s*$/i, ''); var om = /^initiated outside dipolog city council\s*[:\-\u2013\u2014]\s*(.*)$/i.exec(v); if (om) v = om[1].trim(); else if (/^initiated outside/i.test(v)) v = ''; return v ? (/chapter$/i.test(v) ? v.replace(/\s*chapter$/i, '') : v) : ''; };
 
   // ---- watermark + header ----
   async function tryImg(label, dataUrl, kind) {
