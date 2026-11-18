@@ -255,13 +255,14 @@ body.app{display:flex;min-height:100vh}
 <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
 <script src="announce.js" defer></script>
+<style id="ico-file">.ico-file{--i:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14 2.5H7a2 2 0 0 0-2 2v15a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z'/%3E%3Cpath d='M14 2.5V8h5'/%3E%3Cpath d='M9 13h6'/%3E%3Cpath d='M9 17h6'/%3E%3C/svg%3E")}</style>
 </head>
 <body class="app">
 <aside id="side">
   <div class="brand"><span class="logos " aria-hidden="true"><span class="lg lg-phi"></span><span class="lg lg-sigma"></span><span class="lg lg-tao"></span><span class="lg lg-tym"></span></span><div class="bt"><b><span class="l">Tau Gamma Phi &amp; Tau Gamma Sigma</span><span class="s">Dipolog City Council</span></b><small>Dipolog City Council</small><small class="mu"><span data-role="admin" style="display:contents"><i>Admin</i></span></small></div></div>
   <div class="who"><span class="av"><i class="ico ico-user"></i></span><span class="nm"></span><span data-role="admin" style="display:contents"><em>Admin</em></span></div>
   <nav class="navs">
-<span data-role="admin" style="display:contents"><a class="nav" id="navD" href="#" target="_top"><i class="ico ico-home"></i><span class="l">Dashboard</span><span class="s">Dashboard</span></a></span><span data-role="member" style="display:contents"><a class="nav" id="navA" href="#" target="_top"><i class="ico ico-about"></i><span class="l">About Us</span><span class="s">About</span></a><a class="nav" id="navG" href="#" target="_top"><i class="ico ico-gallery"></i><span class="l">Gallery</span><span class="s">Gallery</span></a><a class="nav" id="navC" href="#" target="_top"><i class="ico ico-cert"></i><span class="l">COL</span><span class="s">COL</span></a></span><button class="nav on"><i class="ico ico-calendar"></i><span class="l">Activities</span><span class="s">Activities</span></button><span data-role="member" style="display:contents"><a class="nav" id="prof" href="#" target="_top"><i class="ico ico-idcard"></i><span class="l">My Profile</span><span class="s">Profile</span></a></span><button class="nav" id="out"><i class="ico ico-logout"></i><span>Log out</span></button>
+<span data-role="admin" style="display:contents"><a class="nav" id="navD" href="#" target="_top"><i class="ico ico-home"></i><span class="l">Dashboard</span><span class="s">Dashboard</span></a></span><span data-role="member" style="display:contents"><a class="nav" id="navA" href="#" target="_top"><i class="ico ico-about"></i><span class="l">About Us</span><span class="s">About</span></a><a class="nav" id="navG" href="#" target="_top"><i class="ico ico-gallery"></i><span class="l">Gallery</span><span class="s">Gallery</span></a><a class="nav" id="navC" href="#" target="_top"><i class="ico ico-cert"></i><span class="l">COL</span><span class="s">COL</span></a></span><button class="nav on"><i class="ico ico-calendar"></i><span class="l">Activities</span><span class="s">Activities</span></button><a class="nav" id="navF" href="#" target="_top"><i class="ico ico-file"></i><span class="l">Files</span><span class="s">Files</span></a><span data-role="member" style="display:contents"><a class="nav" id="prof" href="#" target="_top"><i class="ico ico-idcard"></i><span class="l">My Profile</span><span class="s">Profile</span></a></span><button class="nav" id="out"><i class="ico ico-logout"></i><span>Log out</span></button>
   </nav>
 </aside>
 <main id="main">
@@ -323,6 +324,7 @@ if ($('navD')) $('navD').href = pg('dashboard');
 if ($('navA')) $('navA').href = pg('about');
 if ($('navG')) $('navG').href = pg('about', { view: 'gallery' });
 if ($('navC')) $('navC').href = pg('col');
+if ($('navF')) $('navF').href = pg('files');
 if ($('prof')) $('prof').href = 'Profile.html?id=' + encodeURIComponent(ME);
 $('out').onclick = function () { google.script.run.withSuccessHandler(goLogin).withFailureHandler(goLogin).memberLogout(TOKEN); };
 
