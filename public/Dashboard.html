@@ -471,6 +471,7 @@ function show(v) {
 }
 </style>
 <script src="announce.js" defer></script>
+<style id="ico-file">.ico-file{--i:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14 2.5H7a2 2 0 0 0-2 2v15a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z'/%3E%3Cpath d='M14 2.5V8h5'/%3E%3Cpath d='M9 13h6'/%3E%3Cpath d='M9 17h6'/%3E%3C/svg%3E")}</style>
 </head>
 <body class="app">
 <aside id="side">
@@ -478,7 +479,7 @@ function show(v) {
   <div class="who"><span class="av"><i class="ico ico-user"></i></span><span class="nm"></span><em>Admin</em></div>
   <nav class="navs">
     <button class="nav on" data-v="master"><i class="ico ico-members"></i><span class="l">Members Master List</span><span class="s">Members</span></button>
-    <button class="nav" data-v="pending"><i class="ico ico-pending"></i><span class="l">Pending</span><span class="s">Pending</span><span class="badge" id="pcount">0</span></button><button class="nav" data-v="about"><i class="ico ico-about"></i><span class="l">About Us Content</span><span class="s">About</span></button><button class="nav" data-v="gallery"><i class="ico ico-gallery"></i><span class="l">Gallery</span><span class="s">Gallery</span></button><a class="nav" id="navAct" href="#" target="_top"><i class="ico ico-calendar"></i><span class="l">Activities</span><span class="s">Activities</span></a>
+    <button class="nav" data-v="pending"><i class="ico ico-pending"></i><span class="l">Pending</span><span class="s">Pending</span><span class="badge" id="pcount">0</span></button><button class="nav" data-v="about"><i class="ico ico-about"></i><span class="l">About Us Content</span><span class="s">About</span></button><button class="nav" data-v="gallery"><i class="ico ico-gallery"></i><span class="l">Gallery</span><span class="s">Gallery</span></button><a class="nav" id="navAct" href="#" target="_top"><i class="ico ico-calendar"></i><span class="l">Activities</span><span class="s">Activity</span></a><a class="nav" id="navF" href="#" target="_top"><i class="ico ico-file"></i><span class="l">Files</span><span class="s">Files</span></a>
     <button class="nav" id="out"><i class="ico ico-logout"></i><span>Log out</span></button>
   </nav>
 </aside>
@@ -964,6 +965,7 @@ document.getElementById('out').onclick = function () {
   google.script.run.withSuccessHandler(goLogin).withFailureHandler(goLogin).memberLogout(TOKEN);
 };
 var navAct = document.getElementById('navAct'); if (navAct) navAct.href = pg('activities');
+var navF = document.getElementById('navF'); if (navF) navF.href = pg('files');
 if (typeof loadMaster === 'function') loadMaster();
 if (IS_ADMIN) {
   if (typeof loadPending === 'function') loadPending();
