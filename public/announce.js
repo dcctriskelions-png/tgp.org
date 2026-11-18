@@ -64,8 +64,11 @@
     if (!navs || !ico) return;
     var ref = navs.querySelector('.nav:not(.on):not(.an-nav) i.ico') || navs.querySelector('i.ico');
     if (ref) { var cs = getComputedStyle(ref); ico.style.fontSize = cs.fontSize; ico.style.color = cs.color; }
-    var mobile = window.matchMedia('(max-width:820px)').matches, count = navs.children.length;
-    navs.classList.toggle('an-tight', mobile && count >= 7);               // 7 buttons in one row: make icons and captions a little smaller
+    var mobile = window.matchMedia('(max-width:820px)').matches;
+    var inFlow = function (n) { var c = getComputedStyle(n); return c.display !== 'none' && c.position !== 'fixed'; };
+    var count = Array.prototype.filter.call(navs.children, inFlow).length;
+    var buttons = Array.prototype.filter.call(navs.querySelectorAll('.nav'), inFlow).length;
+    navs.classList.toggle('an-tight', mobile && buttons >= 7);               // 7 buttons in one row: make icons and captions a little smaller
     if (mobile && getComputedStyle(navs).display === 'grid') navs.style.setProperty('grid-template-columns', 'repeat(' + count + ',minmax(0,1fr))', 'important');
     else navs.style.removeProperty('grid-template-columns');
   }
