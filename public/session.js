@@ -2,7 +2,7 @@
    Load it AFTER gas-shim.js and BEFORE the page's own script. */
 var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxjbyRlMPnxxAKBLSedAl6xccdIY9lSGf3MOIo4m-nA5FzkFDTD9Xq_cO7kHrjlu4EaLw/exec';
 var TGP_PAGES = { home: 'index.html', login: 'MemberLogin.html', admin: 'AdminLogin.html', about: 'AboutUs.html',
-                  col: 'COL.html', activities: 'Activities.html', dashboard: 'Dashboard.html' };
+                  col: 'COL.html', activities: 'Activities.html', dashboard: 'Dashboard.html', files: 'Files.html' };
 
 function tgpToken() {
   var t = new URLSearchParams(location.search).get('token') || '';
