@@ -1,12 +1,13 @@
 /* Announcements bell for logged-in pages.
-   - Members: a bell with a red number for announcements they have not read yet.
-   - Admins: the same bell, plus a form to post and a delete button on each announcement.
+   - Members: a bell with a red number for announcements they have not read yet. A member can also send an announcement
+     to the members of his / her own chapter or of other chapters (and delete the ones he / she posted).
+   - Admins: the same, plus posting to ALL members, marking an announcement urgent, and deleting any announcement.
    Load AFTER gas-shim.js and session.js (it uses TGP_TOKEN, TGP_REAL and TGP_INFO from session.js). */
 (function () {
   if (typeof TGP_TOKEN === 'undefined' || !TGP_REAL) return;          // not logged in: nothing to show
   var POLL_MS = 90000, FRESH_MS = 45000;
   var seenKey = 'tgp_ann_seen_' + (TGP_INFO.admin ? 'admin' : (TGP_INFO.id || 'member'));
-  var items = [], canPost = !!TGP_INFO.admin, lastLoad = 0, loading = false, open = false, loadError = '', panelSeen = '';
+  var items = [], canPost = true, canAll = !!TGP_INFO.admin, myCh = [], allCh = [], formOpen = false, lastLoad = 0, loading = false, open = false, loadError = '', panelSeen = '';
 
   function $(id) { return document.getElementById(id); }
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
@@ -44,6 +45,12 @@
   '.an-m{font-size:12px;color:#9a9482;margin:0 0 8px}.an-m i{font-style:normal;color:#ff9d8f;font-weight:700;margin-left:6px}.an-m u{text-decoration:none;color:#e8b83a;font-weight:700;margin-left:6px}' +
   '.an-b{font-size:14px;line-height:1.5;white-space:pre-wrap;word-break:break-word;color:#e9e4d2}' +
   '.an-del{margin-top:10px;background:none;border:1px solid #6b2a26;color:#ff9d8f;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer}' +
+  '.an-new{width:100%;margin:0 0 12px;background:#1d1d24;color:#e8b83a;border:1px dashed #6b5a22;border-radius:10px;padding:10px;font:700 13px Arial,sans-serif;cursor:pointer}' +
+  '.an-form select{width:100%;box-sizing:border-box;background:#0f0f13;border:1px solid #3a3a44;border-radius:8px;color:#f5f1e2;padding:10px;font:14px Arial,sans-serif;margin:0 0 8px}' +
+  '.an-chs{max-height:170px;overflow:auto;border:1px solid #3a3a44;border-radius:8px;background:#0f0f13;padding:6px 10px;margin:0 0 8px}' +
+  '.an-chs label{display:flex;align-items:center;gap:8px;font-size:13px;color:#e9e4d2;padding:4px 0;cursor:pointer}' +
+  '.an-chs-h{font-size:12px;color:#9a9482;margin:0 0 4px}.an-chs-h button{background:none;border:0;color:#e8b83a;font:700 12px Arial,sans-serif;cursor:pointer;padding:0 6px}' +
+  '.an-to{font-size:12px;color:#9a9482;margin:-4px 0 8px}' +
   '.an-empty{color:#9a9482;text-align:center;padding:30px 10px;font-size:14px}' +
   '.an-form{background:#1d1d24;border:1px solid #3a3320;border-radius:12px;padding:12px;margin:0 0 14px}' +
   '.an-form h3{margin:0 0 8px;font-size:13px;color:#e8b83a;letter-spacing:.06em;text-transform:uppercase}' +
@@ -122,7 +129,10 @@
   function render() {
     var body = $('an-body'); if (!body) return; body.innerHTML = '';
     var seen = open ? panelSeen : getSeen();
-    if (canPost) body.appendChild(buildForm());
+    if (canPost) {
+      if (formOpen) body.appendChild(buildForm());
+      else { var nb = el('button', 'an-new', '+ New announcement'); nb.type = 'button'; nb.onclick = function () { formOpen = true; render(); var t = $('an-title'); if (t) t.focus(); }; body.appendChild(nb); }
+    }
     if (loadError) body.appendChild(el('div', 'an-empty', loadError));
     else if (!items.length) body.appendChild(el('div', 'an-empty', loading ? 'Loading...' : 'No announcements yet.'));
     items.forEach(function (a) {
@@ -131,8 +141,10 @@
       var m = el('p', 'an-m', fmt(a.created) + (a.by ? ' \u00b7 ' + a.by : ''));
       if (a.urgent) m.appendChild(el('i', '', 'URGENT'));
       if (a.created > seen) m.appendChild(el('u', '', 'NEW'));
-      card.appendChild(m); card.appendChild(el('div', 'an-b', a.message));
-      if (canPost) {
+      card.appendChild(m);
+      if (a.audience === 'CHAPTERS' && a.chapters && a.chapters.length) card.appendChild(el('p', 'an-to', 'For: ' + a.chapters.join(', ')));
+      card.appendChild(el('div', 'an-b', a.message));
+      if (a.canDelete) {
         var d = el('button', 'an-del', 'Delete'); d.type = 'button';
         d.onclick = function () { if (confirm('Delete this announcement for everyone?')) del(a.id); };
         card.appendChild(d);
@@ -143,28 +155,54 @@
 
   function buildForm() {
     var f = el('div', 'an-form'); f.appendChild(el('h3', '', 'New announcement'));
-    var t = el('input'); t.type = 'text'; t.id = 'an-title'; t.maxLength = 120; t.placeholder = 'Title (e.g. General Assembly this Sunday)'; f.appendChild(t);
-    var m = el('textarea'); m.id = 'an-text'; m.maxLength = 1500; m.placeholder = 'Message for all members'; f.appendChild(m);
-    var row = el('div', 'an-row'), lab = el('label'), cb = el('input'); cb.type = 'checkbox'; cb.id = 'an-urgent';
-    lab.appendChild(cb); lab.appendChild(document.createTextNode('Mark as urgent')); row.appendChild(lab);
+    var t = el('input'); t.type = 'text'; t.id = 'an-title'; t.maxLength = 120; t.placeholder = 'Title (e.g. Chapter meeting this Sunday)'; f.appendChild(t);
+    var m = el('textarea'); m.id = 'an-text'; m.maxLength = 1500; m.placeholder = canAll ? 'Message' : 'Message for the chapter members'; f.appendChild(m);
+    if (canAll) {                                                            // admins: everyone or selected chapters
+      var sel = el('select'); sel.id = 'an-aud';
+      [['ALL', 'To all members'], ['CHAPTERS', 'To selected chapters only']].forEach(function (o) { var op = el('option', '', o[1]); op.value = o[0]; sel.appendChild(op); });
+      sel.onchange = function () { $('an-chwrap').style.display = sel.value === 'CHAPTERS' ? 'block' : 'none'; };
+      f.appendChild(sel);
+    }
+    var wrap = el('div'); wrap.id = 'an-chwrap'; wrap.style.display = canAll ? 'none' : 'block';
+    var hd = el('div', 'an-chs-h', canAll ? 'Chapters to notify:' : 'Chapters to notify (your own chapter is ticked):');
+    var all = el('button', '', 'All'); all.type = 'button'; all.onclick = function () { setChecks(true); };
+    var none = el('button', '', 'None'); none.type = 'button'; none.onclick = function () { setChecks(false); };
+    hd.appendChild(all); hd.appendChild(none); wrap.appendChild(hd);
+    var list = el('div', 'an-chs'); list.id = 'an-chs';
+    allCh.forEach(function (c) {
+      var lb = el('label'), cb = el('input'); cb.type = 'checkbox'; cb.value = c; cb.checked = !canAll && myCh.indexOf(c) !== -1;
+      lb.appendChild(cb); lb.appendChild(document.createTextNode(c)); list.appendChild(lb);
+    });
+    if (!allCh.length) list.appendChild(el('div', 'an-chs-h', 'The chapter list is not loaded yet. Close and reopen this panel.'));
+    wrap.appendChild(list); f.appendChild(wrap);
+    var row = el('div', 'an-row');
+    if (canAll) {
+      var lab = el('label'), cb2 = el('input'); cb2.type = 'checkbox'; cb2.id = 'an-urgent';
+      lab.appendChild(cb2); lab.appendChild(document.createTextNode('Mark as urgent')); row.appendChild(lab);
+    } else row.appendChild(el('span', '', ''));
     var count = el('span', '', '0 / 1500'); m.oninput = function () { count.textContent = m.value.length + ' / 1500'; }; row.appendChild(count); f.appendChild(row);
     var bar = el('div', 'an-row'); bar.style.marginTop = '10px';
-    var btn = el('button', 'an-post', 'Post to all members'); btn.type = 'button'; btn.id = 'an-post'; btn.onclick = post; bar.appendChild(btn); f.appendChild(bar);
+    var btn = el('button', 'an-post', canAll ? 'Post announcement' : 'Send to chapter members'); btn.type = 'button'; btn.id = 'an-post'; btn.onclick = post; bar.appendChild(btn);
+    var cancel = el('button', 'an-del', 'Cancel'); cancel.type = 'button'; cancel.style.marginTop = '0'; cancel.onclick = function () { formOpen = false; render(); }; bar.appendChild(cancel); f.appendChild(bar);
     var msg = el('div'); msg.id = 'an-msg'; f.appendChild(msg);
     return f;
   }
+  function setChecks(on) { Array.prototype.forEach.call($('an-chs').querySelectorAll('input'), function (c) { c.checked = on; }); }
   function say(text, cls) { var m = $('an-msg'); if (m) { m.textContent = text; m.className = cls || ''; } }
 
   function post() {
-    var title = $('an-title').value.trim(), text = $('an-text').value.trim(), urgent = $('an-urgent').checked, btn = $('an-post');
+    var title = $('an-title').value.trim(), text = $('an-text').value.trim(), urgent = !!($('an-urgent') && $('an-urgent').checked), btn = $('an-post');
+    var audience = canAll && $('an-aud').value === 'ALL' ? 'ALL' : 'CHAPTERS';
+    var chs = audience === 'ALL' ? [] : Array.prototype.map.call($('an-chs').querySelectorAll('input:checked'), function (c) { return c.value; });
     if (!title || !text) return say('Please fill in the title and the message.', 'err');
+    if (audience === 'CHAPTERS' && !chs.length) return say('Tick at least one chapter to notify.', 'err');
     btn.disabled = true; say('Posting...', '');
     google.script.run.withSuccessHandler(function (r) {
       btn.disabled = false;
       if (r && r.expired) { say('Your session expired. Please log in again.', 'err'); return; }
       if (!r || !r.success) return say((r && r.message) || 'Could not post.', 'err');
-      load(true, function () { panelSeen = newest(); markRead(); render(); say('Posted. Members will see it when they open the app.', 'ok'); });
-    }).withFailureHandler(function (e) { btn.disabled = false; say(e.message || 'Could not post.', 'err'); }).postAnnouncement(TGP_TOKEN, title, text, urgent);
+      load(true, function () { panelSeen = newest(); markRead(); render(); say(audience === 'ALL' ? 'Posted. Members will see it when they open the app.' : 'Sent. The members of the selected chapters will see it when they open the app.', 'ok'); });
+    }).withFailureHandler(function (e) { btn.disabled = false; say(e.message || 'Could not post.', 'err'); }).postAnnouncement(TGP_TOKEN, title, text, urgent, audience, chs);
   }
   function del(id) {
     google.script.run.withSuccessHandler(function (r) {
@@ -189,7 +227,7 @@
     loading = true;
     google.script.run.withSuccessHandler(function (r) {
       loading = false; lastLoad = Date.now();
-      if (r && r.success) { items = r.items || []; canPost = !!r.canPost; loadError = ''; try { sessionStorage.setItem('tgp_ann_cache', JSON.stringify({ t: lastLoad, items: items })); } catch (e) {} }
+      if (r && r.success) { items = r.items || []; canPost = r.canPost !== false; canAll = !!r.canPostAll; myCh = r.myChapters || []; allCh = r.allChapters || []; loadError = ''; try { sessionStorage.setItem('tgp_ann_cache', JSON.stringify({ t: lastLoad, items: items })); } catch (e) {} }
       else if (!r || !r.expired) loadError = 'Could not load announcements. Please try again.';
       updateIndicator(); if (done) done();
     }).withFailureHandler(function () {
