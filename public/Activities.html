@@ -241,6 +241,14 @@ body.app{display:flex;min-height:100vh}
 #newBtn{margin-bottom:4px}#msg{font-weight:700;font-size:13px;margin-left:10px}
 #listTitle{font:800 13px var(--font);letter-spacing:.12em;text-transform:uppercase;color:var(--ink);margin:22px 0 4px;display:flex;align-items:center;gap:10px}
 #listTitle::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--gold),transparent)}
+#formBox .vopt{display:flex;gap:10px;align-items:flex-start;margin:6px 0 0;padding:10px 12px;border:1px solid var(--g300);border-radius:10px;cursor:pointer;text-transform:none;letter-spacing:0;font:500 14px var(--font);color:var(--ink);background:#fff}
+#formBox .vopt input{width:auto;padding:0;margin:3px 0 0;flex:none;accent-color:#b08d1e}
+#formBox .vopt b{display:block;font:700 14px var(--font);letter-spacing:0;text-transform:none}#formBox .vopt small{display:block;color:var(--g600);font:500 12.5px var(--font);margin-top:2px}
+#formBox .vopt.on{border-color:var(--gold);background:var(--goldwash)}#formBox .vopt.off{opacity:.55;cursor:not-allowed}
+.chlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:4px 12px;max-height:230px;overflow:auto;margin-top:8px;padding:10px 12px;border:1px solid var(--g300);border-radius:10px;background:#fff}
+#formBox .chk{display:flex;gap:8px;align-items:center;margin:0;padding:4px 0;text-transform:none;letter-spacing:0;font:500 13px var(--font);color:var(--ink);cursor:pointer}
+#formBox .chk input{width:auto;padding:0;margin:0;flex:none;accent-color:#b08d1e}
+.chbox h3{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 @media(max-width:720px){.two{grid-template-columns:1fr}.day{min-height:46px;padding:5px}.day .n{right:3px;bottom:3px;padding:0 5px}.tio{flex:1;min-width:0}.tabs{display:flex}.tab{flex:1;justify-content:center}}
 
 </style>
@@ -267,7 +275,7 @@ body.app{display:flex;min-height:100vh}
 </aside>
 <main id="main">
   <div class="ph"><span class="phi"><i class="ico ico-calendar"></i></span><div><h1>Activity Attendance</h1><p class="muted">Create activities, then members log their <b>Time In</b> and <b>Time Out</b>. Times are in Philippine time.</p></div></div>
-  <div class="tabs"><button class="tab on" id="tabCal"><i class="ico ico-calendar"></i> Calendar</button><button class="tab" id="tabMine" style="display:none"><i class="ico ico-clipboard"></i> My Attendance</button></div>
+  <div class="tabs"><button class="tab on" id="tabCal"><i class="ico ico-calendar"></i> Calendar</button><button class="tab" id="tabMine" style="display:none"><i class="ico ico-clipboard"></i> My Attendance</button><button class="tab" id="tabChap" style="display:none"><i class="ico ico-members"></i> My Chapter</button></div>
 
   <div id="vCal">
     <div><button class="btn btn-ic ico-plus" id="newBtn">New Activity</button><span id="msg"></span></div>
@@ -285,6 +293,13 @@ body.app{display:flex;min-height:100vh}
       </div>
       <label for="fLoc">Location *</label><input id="fLoc" maxlength="200" placeholder="Venue / address">
       <label for="fDesc">Description</label><textarea id="fDesc" rows="4" maxlength="2000" placeholder="What is this activity about?"></textarea>
+      <label>Who can see this activity? *</label>
+      <div id="visBox">
+        <label class="vopt" id="vo-ALL"><input type="radio" name="fVis" value="ALL" checked><span><b>1. All Members Can See</b><small>Every logged-in member sees it and can Time In.</small></span></label>
+        <label class="vopt" id="vo-CHAPTER"><input type="radio" name="fVis" value="CHAPTER"><span><b>2. My Chapter Members Only</b><small id="visMine">Private: only the members of your chapter see it.</small></span></label>
+        <label class="vopt" id="vo-SELECTED"><input type="radio" name="fVis" value="SELECTED"><span><b>3. Selected Chapters Only</b><small>Only the members of the chapters you tick below see it.</small></span></label>
+      </div>
+      <div id="chPick" style="display:none"><div class="chlist" id="chList"></div></div>
       <div class="acts"><button class="btn btn-ic ico-save" id="fSave">Save Activity</button><button class="btn gray" id="fCancel">Cancel</button></div>
       <div id="fMsg" style="margin-top:10px;font-size:14px;font-weight:bold"></div>
     </div>
@@ -298,6 +313,11 @@ body.app{display:flex;min-height:100vh}
     <div id="list"></div>
   </div>
 
+  <div id="vChap" style="display:none">
+    <div class="box"><div class="muted">These are the members of your chapter, shown by Last Name, First Name and Middle Name only. A member appears here after ticking <b>“I am now Active here”</b> for the chapter in Edit Your Member Profile.</div>
+      <div class="acts"><button class="btn btn-ic ico-send" id="chapAnn">Send announcement to my chapter</button><button class="btn dark btn-ic ico-refresh" id="chapRef">Refresh</button></div></div>
+    <div id="chapBox" class="muted">Loading...</div>
+  </div>
   <div id="vMine" style="display:none">
     <div class="box"><div id="mineSum" class="muted">Loading...</div></div>
     <div class="box wrap"><table id="mineTbl"></table></div>
@@ -305,9 +325,11 @@ body.app{display:flex;min-height:100vh}
 </main>
 <script src="gas-shim.js"></script>
 <script src="session.js"></script>
+<script src="export-tools.js"></script>
 <script>if (!tgpRequire(false)) { /* redirecting */ }</script>
 <script>
 var TOKEN = TGP_TOKEN, ME = TGP_INFO.id, IS_ADMIN = !!TGP_INFO.admin, WEB_APP_URL = APPS_SCRIPT_URL;
+var MY_CH = [], ALL_CH = [];
 var YM = '', NOW = '', ACTS = [], TYPES = ['Event', 'Activity', 'Community Service', 'Meeting', 'Gathering', 'Other'], SEL = '', SHOW = [], EDIT = '';
 var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 function $(id) { return document.getElementById(id); }
@@ -329,13 +351,14 @@ if ($('prof')) $('prof').href = 'Profile.html?id=' + encodeURIComponent(ME);
 $('out').onclick = function () { google.script.run.withSuccessHandler(goLogin).withFailureHandler(goLogin).memberLogout(TOKEN); };
 
 // ---- tabs ----
-if (!IS_ADMIN) $('tabMine').style.display = '';
+if (!IS_ADMIN) { $('tabMine').style.display = ''; $('tabChap').style.display = ''; }
 function tab(which) {
-  $('vCal').style.display = which === 'c' ? 'block' : 'none'; $('vMine').style.display = which === 'm' ? 'block' : 'none';
-  $('tabCal').classList.toggle('on', which === 'c'); $('tabMine').classList.toggle('on', which === 'm');
+  $('vCal').style.display = which === 'c' ? 'block' : 'none'; $('vMine').style.display = which === 'm' ? 'block' : 'none'; $('vChap').style.display = which === 'h' ? 'block' : 'none';
+  $('tabCal').classList.toggle('on', which === 'c'); $('tabMine').classList.toggle('on', which === 'm'); $('tabChap').classList.toggle('on', which === 'h');
+  if (which === 'h') loadChapter();
   if (which === 'm') loadMine();
 }
-$('tabCal').onclick = function () { tab('c'); }; $('tabMine').onclick = function () { tab('m'); };
+$('tabCal').onclick = function () { tab('c'); }; $('tabMine').onclick = function () { tab('m'); }; $('tabChap').onclick = function () { tab('h'); };
 
 function fillTypes() {
   var keep = $('fType').value;
@@ -350,6 +373,7 @@ function loadMonth(ym) {
     if (!r || !r.success) return say((r && r.message) || 'Could not load activities.', false);
     YM = r.ym; NOW = r.now; ACTS = r.activities;
     if (r.types && r.types.length) { TYPES = r.types; fillTypes(); }
+    MY_CH = r.myChapters || []; ALL_CH = r.allChapters || [];
     if (SEL && SEL.slice(0, 7) !== YM) SEL = '';
     render();
   }).getActivities(TOKEN, ym || YM);
@@ -405,6 +429,7 @@ function card(a, i) {
     '<div class="row"><i class="ico ico-calendar"></i> ' + esc(fmtD(a.date)) + ' <span class="sep">|</span> <i class="ico ico-clock"></i> ' + esc(fmtT(a.start)) + ' – ' + esc(fmtT(a.end)) + '</div>' +
     '<div class="row"><i class="ico ico-login"></i> Time In window: ' + esc(fmtT(opensAt(a))) + ' – ' + esc(fmtT(closesAt(a))) + '</div>' +
     '<div class="row"><i class="ico ico-pin"></i> ' + esc(a.location) + '</div>' +
+    '<div class="row"><i class="ico ico-eye"></i> ' + esc(a.visLabel || 'All members can see') + '</div>' +
     (a.description ? '<div class="desc">' + esc(a.description) + '</div>' : '') +
     '<div class="row" style="color:#6b7280">Created by ' + esc(a.byName) + '</div>' +
     '<div class="row"><i class="ico ico-members"></i><b>' + a.count + '</b> timed in <span class="sep">|</span> <i class="ico ico-check"></i><b>' + out + '</b> timed out' + (inside > 0 ? ' <span class="sep">|</span> <i class="ico ico-dot dotg"></i><b>' + inside + '</b> still inside' : '') + '</div><div class="acts">';
@@ -414,7 +439,7 @@ function card(a, i) {
   if (a.canManage) {
     h += '<button class="btn dark btn-ic ico-members" onclick="showAtt(' + i + ')">Attendees</button><button class="btn gray btn-ic ico-edit" onclick="editAct(' + i + ')">Edit</button>' +
       '<button class="btn gray btn-ic ' + (a.status === 'Cancelled' ? 'ico-undo' : 'ico-ban') + '" onclick="cancelAct(' + i + ')">' + (a.status === 'Cancelled' ? 'Restore' : 'Cancel') + '</button>';
-    h += '<button class="btn gray btn-ic ico-download" onclick="exportAct(' + i + ',\'xlsx\')">Export Excel</button><button class="btn gray btn-ic ico-file" onclick="exportAct(' + i + ',\'pdf\')">Export PDF</button>';
+    h += '<button class="btn gray btn-ic ico-download" onclick="exportAct(' + i + ',\'xlsx\')">Export Excel</button><button class="btn gray btn-ic ico-file" onclick="exportAct(' + i + ',\'pdf\')">Export PDF</button><button class="btn gray btn-ic ico-file" onclick="exportAct(' + i + ',\'word\')">Export Word</button>';
     if (a.type === 'Meeting') h += '<button class="btn gray btn-ic ico-edit" onclick="minutesAct(' + i + ')">Minutes</button>';
     if (IS_ADMIN) h += '<button class="btn red btn-ic ico-trash" onclick="delAct(' + i + ')">Delete</button>';
   }
@@ -502,6 +527,7 @@ function openForm(a) {
   $('fTitle').value = a ? a.title : ''; $('fType').value = a ? a.type : TYPES[0];
   $('fDate').value = a ? a.date : (SEL || (YM === NOW.slice(0, 7) ? NOW.slice(0, 10) : YM + '-01'));
   $('fStart').value = a ? a.start : ''; $('fEnd').value = a ? a.end : ''; $('fLoc').value = a ? a.location : ''; $('fDesc').value = a ? a.description : '';
+  setVis(a ? a.visibility : 'ALL', a ? a.chapters : [], a);
   fmsg('', true); $('formBox').style.display = 'block'; $('formBox').scrollIntoView({ behavior: 'smooth', block: 'start' }); $('fTitle').focus();
 }
 function editAct(i) { openForm(SHOW[i]); }
@@ -509,11 +535,12 @@ $('newBtn').onclick = function () { openForm(null); };
 $('fCancel').onclick = function () { $('formBox').style.display = 'none'; };
 function fmsg(t, ok) { var m = $('fMsg'); m.textContent = t; m.style.color = ok ? '#166534' : '#991b1b'; if (t) m.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
 $('fSave').onclick = function () {
-  var b = this, f = { title: $('fTitle').value.trim(), type: $('fType').value, date: $('fDate').value, start: $('fStart').value, end: $('fEnd').value, location: $('fLoc').value.trim(), description: $('fDesc').value };
+  var b = this, f = { title: $('fTitle').value.trim(), type: $('fType').value, date: $('fDate').value, start: $('fStart').value, end: $('fEnd').value, location: $('fLoc').value.trim(), description: $('fDesc').value, visibility: curVis(), chapters: pickedChapters() };
   var need = [['Title', f.title, 'fTitle'], ['Type', f.type, 'fType'], ['Date', f.date, 'fDate'], ['Start time', f.start, 'fStart'], ['End time', f.end, 'fEnd'], ['Location', f.location, 'fLoc']]
     .filter(function (x) { return !x[1]; });
   if (need.length) { fmsg('Please fill in: ' + need.map(function (x) { return x[0]; }).join(', '), false); $(need[0][2]).focus(); return; }
   if (f.end <= f.start) { fmsg('End time must be later than the start time.', false); $('fEnd').focus(); return; }
+  if (f.visibility === 'SELECTED' && !f.chapters.length) { fmsg('Tick at least one chapter that may see this activity.', false); $('chList').scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
   f.id = EDIT; b.disabled = true; fmsg('Saving...', true);
   google.script.run
     .withSuccessHandler(function (r) {
@@ -525,6 +552,52 @@ $('fSave').onclick = function () {
     .withFailureHandler(function (e) { b.disabled = false; fmsg('Could not reach the server: ' + (e && e.message ? e.message : e) + ' — make sure the newest Code.gs is saved and deployed as a New version.', false); })
     .saveActivity(TOKEN, f);
 };
+
+// ---- who can see it ----
+function curVis() { var r = document.querySelector('input[name=fVis]:checked'); return r ? r.value : 'ALL'; }
+function pickedChapters() { return curVis() === 'SELECTED' ? Array.prototype.map.call($('chList').querySelectorAll('input:checked'), function (c) { return c.value; }) : []; }
+function syncVis() {
+  var v = curVis();
+  ['ALL', 'CHAPTER', 'SELECTED'].forEach(function (k) { $('vo-' + k).classList.toggle('on', k === v); });
+  $('chPick').style.display = v === 'SELECTED' ? 'block' : 'none';
+}
+function setVis(vis, chapters, existing) {
+  $('chList').innerHTML = ALL_CH.map(function (c) { return '<label class="chk"><input type="checkbox" value="' + esc(c) + '"' + ((chapters || []).indexOf(c) !== -1 ? ' checked' : '') + '> ' + esc(c) + '</label>'; }).join('') || '<span class="muted">The chapter list is not loaded yet. Please reopen the form.</span>';
+  var blocked = !MY_CH.length && !(existing && existing.visibility === 'CHAPTER');         // not Active in any chapter: option 2 cannot work
+  var r2 = document.querySelector('input[name=fVis][value=CHAPTER]'); r2.disabled = blocked; $('vo-CHAPTER').classList.toggle('off', blocked);
+  $('visMine').textContent = MY_CH.length ? 'Private: only members Active in ' + MY_CH.join(', ') + ' see it.'
+    : (IS_ADMIN ? 'Admin accounts have no chapter. Use option 1 or 3.' : 'Not available yet: in Edit Your Member Profile, add your chapter and tick “I am now Active here”.');
+  document.querySelector('input[name=fVis][value=' + (blocked && vis === 'CHAPTER' ? 'ALL' : (vis || 'ALL')) + ']').checked = true;
+  syncVis();
+}
+Array.prototype.forEach.call(document.querySelectorAll('input[name=fVis]'), function (r) { r.onchange = syncVis; });
+
+// ---- Word version of the activity report / attendance sheet (uses the same data as Export Excel / PDF) ----
+function wordModel(r) {
+  var A = r.activity, rows = r.attendees.map(function (x, n) { return [String(n + 1), x.name, x.memberId, timeCell(x.timeIn), x.timeOut ? timeCell(x.timeOut) : 'No time out', x.timeOut ? fmtDur(x.minutes) : '-', '']; });
+  var blocks = [{ h: 'Activity Details' }, { kv: [['Name of Activity', A.title], ['Type', A.type], ['Date', fmtD(A.date)], ['Time In (start)', fmtT(A.start)], ['Time Out (end)', fmtT(A.end)], ['Venue', A.location || '-'],
+    ['Description', A.description || '-'], ['Status', A.status || ''], ['Created by', A.createdBy || '']] }];
+  if (A.isMeeting) blocks.push({ h: 'Minutes of the Meeting' }, { p: A.minutes || 'No minutes recorded yet.' });
+  blocks.push({ h: 'Attendance Sheet' }, { table: { head: ['No.', 'Attendee', 'Member ID', 'Time In', 'Time Out', 'Duration', 'Signature'], rows: rows, empty: 'No attendees recorded.' } },
+    { note: 'Total attendees: ' + r.total + '.  Generated ' + (r.generatedAt || '') + (r.generatedBy ? ' by ' + r.generatedBy : '') + '.' });
+  return { title: A.title, subtitle: 'Activity report and attendance sheet', landscape: false, blocks: blocks };
+}
+
+// ---- my chapter: Members List (names only) ----
+function loadChapter() {
+  $('chapBox').innerHTML = '<div class="muted">Loading...</div>';
+  call(function (r) {
+    if (!r || !r.success) { $('chapBox').innerHTML = '<div class="box muted">' + esc((r && r.message) || 'Could not load.') + '</div>'; return; }
+    if (!r.myChapters.length) { $('chapBox').innerHTML = '<div class="box"><b>You are not in a chapter Members List yet.</b><div class="muted" style="margin-top:6px">Open <a href="Edit.html" target="_top">Edit Your Member Profile</a>, add your chapter under CHAPTER / TAO / COUNCIL AFFILIATED and tick <b>“I am now Active here”</b>.</div></div>'; return; }
+    $('chapBox').innerHTML = r.groups.map(function (g) {
+      return '<div class="box chbox"><h3>' + esc(g.chapter) + ' <span class="chip">' + g.members.length + ' member' + (g.members.length === 1 ? '' : 's') + '</span></h3>' +
+        '<div class="wrap" style="margin-top:10px"><table><tr><th>#</th><th>Last Name</th><th>First Name</th><th>Middle Name</th></tr>' +
+        (g.members.map(function (m, n) { return '<tr><td>' + (n + 1) + '</td><td>' + esc(m.last) + '</td><td>' + esc(m.first) + '</td><td>' + esc(m.middle) + '</td></tr>'; }).join('') || '<tr><td colspan="4">No members yet.</td></tr>') + '</table></div></div>';
+    }).join('');
+  }).getChapterMembers(TOKEN, '');
+}
+$('chapRef').onclick = loadChapter;
+$('chapAnn').onclick = function () { var b = document.getElementById('an-bell'); if (b) b.click(); else say('The announcement bell is still loading. Try again in a moment.', false); };
 
 // ---- my attendance ----
 function loadMine() {
@@ -549,10 +622,11 @@ function loadXlsx(cb, fail) {
 function hm(x) { var p = String(x || '').split(' '); return p[1] ? fmtT(p[1].slice(0, 5)) : ''; }       // "2026-11-22 14:03" -> "2:03 PM"
 function safeName(t) { return String(t || 'Activity').replace(/[^A-Za-z0-9]+/g, '_').replace(/^_|_$/g, '').slice(0, 50) || 'Activity'; }
 function exportAct(i, kind) {
-  var a = SHOW[i]; say('Preparing the ' + (kind === 'pdf' ? 'PDF report' : 'Excel file') + '...', true);
+  var a = SHOW[i]; say('Preparing the ' + (kind === 'pdf' ? 'PDF report' : kind === 'word' ? 'Word file' : 'Excel file') + '...', true);
   call(function (r) {
     if (!r || !r.success) return say((r && r.message) || 'Could not export this activity.', false);
     if (kind === 'pdf') { printReport(r); say('', true); return; }
+    if (kind === 'word') { tgpWord(wordModel(r), 'Activity - ' + r.activity.title + ' - ' + r.activity.date).then(function () { say('Word file downloaded.', true); }); return; }
     loadXlsx(function () { try { buildXlsx(r); say('Excel file downloaded.', true); } catch (e) { say('Could not build the Excel file: ' + (e && e.message), false); } },
       function () { say('The Excel tool could not be loaded. Check your connection and try again.', false); });
   }).actExportData(TOKEN, a.id);
