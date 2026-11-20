@@ -472,6 +472,22 @@ function show(v) {
 </style>
 <script src="announce.js" defer></script>
 <style id="ico-file">.ico-file{--i:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14 2.5H7a2 2 0 0 0-2 2v15a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z'/%3E%3Cpath d='M14 2.5V8h5'/%3E%3Cpath d='M9 13h6'/%3E%3Cpath d='M9 17h6'/%3E%3C/svg%3E")}</style>
+<style id="master-css">
+.ml-tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:0 0 10px}
+.ml-tools select,.ml-export select{padding:9px 12px;border:1px solid var(--g300);border-radius:10px;background:#fff;font:600 13px var(--font);color:var(--ink);max-width:100%}
+.ml-export{display:flex;gap:10px;flex-wrap:wrap;align-items:center;background:var(--goldwash);border:1px solid #ecd9a0;border-radius:12px;padding:10px 12px;margin:0 0 12px}
+.ml-et{font-size:13px;color:var(--golddk2);display:flex;align-items:center;gap:6px;flex-basis:100%}
+.st-b{display:inline-block;padding:3px 10px;border-radius:99px;font:800 10.5px var(--font);letter-spacing:.07em}
+.st-s{background:#fff1cf;color:#8a5a00;border:1px solid #f0cf7d}.st-e{background:#fde2e2;color:#9b1c1c;border:1px solid #efb4b4}
+tr.st-row-s td{background:#fffaf0}tr.st-row-e td{background:#fff5f5}
+.st-btn{padding:6px 10px;font-size:11.5px;border-radius:8px;margin:0}
+#st-modal{position:fixed;inset:0;z-index:99997;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:16px}
+.st-card{background:#fff;border-radius:14px;max-width:440px;width:100%;padding:18px;border-top:4px solid var(--gold);box-shadow:0 14px 40px rgba(0,0,0,.4)}
+.st-card h3{margin:0 0 4px;font-size:18px}.st-card p{margin:0 0 10px}
+.st-card label{display:block;font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--g700);margin:8px 0 4px}
+.st-card textarea{width:100%;box-sizing:border-box;min-height:90px;padding:10px;border:1px solid var(--g300);border-radius:10px;font:14px var(--font);resize:vertical}
+#st-msg{min-height:18px;font-size:12.5px;font-weight:600;margin:6px 0}.st-acts{display:flex;gap:8px;justify-content:flex-end}
+</style>
 </head>
 <body class="app">
 <aside id="side">
@@ -486,10 +502,44 @@ function show(v) {
 <main id="main">
   <section id="v-master" class="view on"><div class="ph"><span class="phi"><i class="ico ico-members"></i></span><div><h1>Members Master List</h1><p class="muted">Members with an assigned Member ID. Members without an ID are in the Pending tab.</p></div></div>
 <div id="mstat" class="muted"></div>
-<div class="bar"><div class="searchbox"><i class="ico ico-search"></i><input id="mq" placeholder="Search name, ID, chapter..."></div><span id="mcount" class="chip"></span><button class="btn dark btn-ic ico-refresh" onclick="loadMaster()">Refresh</button></div>
+<div class="ml-tools">
+  <div class="searchbox"><i class="ico ico-search"></i><input id="mq" placeholder="Search name, ID, chapter..."></div>
+  <select id="mstd" aria-label="Filter by standing"><option value="">All standings</option><option value="ACTIVE">Active</option><option value="SUSPENDED">Suspended</option><option value="EXPELLED">Expelled</option></select>
+  <span id="mcount" class="chip"></span>
+  <button class="btn dark btn-ic ico-refresh" onclick="loadMaster()">Refresh</button>
+</div>
+<div class="ml-export">
+  <div class="ml-et"><i class="ico ico-download"></i> <b>Export to Excel by chapter</b></div>
+  <select id="mchap" aria-label="Chapter to export"><option value="">All chapters (one sheet per chapter)</option></select>
+  <button class="btn btn-ic ico-download" id="mexp" type="button">Export Excel</button>
+  <span id="mexpmsg" class="muted"></span>
+</div>
 <div class="wrap"><table id="mt"></table></div>
+
+<div id="st-modal" role="dialog" aria-modal="true" aria-labelledby="st-title">
+  <div class="st-card">
+    <h3 id="st-title">Suspend member</h3>
+    <p id="st-who" class="muted"></p>
+    <label for="st-reason" id="st-lbl">Reason</label>
+    <textarea id="st-reason" maxlength="500" placeholder="Write the reason (this is kept in the Discipline log)"></textarea>
+    <div id="st-msg"></div>
+    <div class="st-acts"><button class="btn" id="st-ok" type="button">Confirm</button><button class="btn gray" id="st-no" type="button">Cancel</button></div>
+  </div>
+</div>
 <script>
-var MROWS = [], MCOLS = [], MSTAT = {};
+var MROWS = [], MCOLS = [], MSTAT = {}, STAT = {}, STIDX = -1, CHIDX = -1, ST_PENDING = null;
+var OLD_CH = { "st. vincent's college chapter inc chapter": "St Vincent's College Inc Chapter", "tau gamma sigma dipolog city chapter": "TGS Dipolog City Chapter",
+  "triskelion league of elders zdn": "Triskelion League of Elders", "dipolog computer systems institute chapter": "Dipolog Computer System Inc Chapter (Inactive)",
+  "dipolog city chapter now dip city council": "Dipolog City Chapter", "jose rizal memorial state university": "Jose Rizal Memorial State University Chapter" };
+function chapKey(v) {
+  v = String(v == null ? '' : v).trim(); if (!v) return '(No chapter)';
+  if (/^initiated outside/i.test(v)) return 'Initiated Outside DCC';
+  return OLD_CH[v.replace(/\s*\(inactive\)\s*$/i, '').toLowerCase()] || v;
+}
+function standingOf(r) {
+  var info = STAT[r[0]]; if (info) return info.status;
+  var v = String(STIDX >= 0 ? r[STIDX] : '').trim().toUpperCase(); return (v === 'SUSPENDED' || v === 'EXPELLED') ? v : 'ACTIVE';
+}
 function loadMaster() {
   var t = document.getElementById('mt');
   t.innerHTML = '<tr><td>Loading...</td></tr>';
@@ -497,27 +547,122 @@ function loadMaster() {
     .withSuccessHandler(function (r) {
       if (r && r.expired) return expired();
       if (!r || !r.success) { t.innerHTML = '<tr><td>' + esc((r && r.message) || 'The server returned no data. Redeploy a New version and try again.') + '</td></tr>'; return; }
-      MCOLS = r.columns; MROWS = r.rows; MSTAT = r.stats || {}; drawMaster();
+      MCOLS = r.columns; MROWS = r.rows; MSTAT = r.stats || {};
+      STIDX = MCOLS.indexOf('STATUS'); CHIDX = MCOLS.indexOf('CHAPTER INITIATED'); fillChapters();
+      google.script.run.withSuccessHandler(function (s) { STAT = (s && s.success && s.items) || {}; drawMaster(); })
+        .withFailureHandler(function () { STAT = {}; drawMaster(); }).memberStatusInfo(TOKEN);
     })
     .withFailureHandler(function (e) { t.innerHTML = '<tr><td>Error: ' + esc(e.message) + '</td></tr>'; })
     .getMasterList(TOKEN);
 }
+function fillChapters() {
+  var sel = document.getElementById('mchap'), keep = sel.value, seen = {}, names = [];
+  MROWS.forEach(function (r) { var k = chapKey(CHIDX >= 0 ? r[CHIDX] : ''); if (!seen[k]) { seen[k] = 1; names.push(k); } });
+  names.sort(function (a, b) { return a.localeCompare(b); });
+  sel.innerHTML = '<option value="">All chapters (one sheet per chapter)</option>' + names.map(function (n) { return '<option value="' + esc(n) + '">' + esc(n) + '</option>'; }).join('');
+  sel.value = keep;
+}
 function drawMaster() {
-  var q = document.getElementById('mq').value.trim().toLowerCase();
-  var rows = MROWS.filter(function (r) { return !q || r.join(' ').toLowerCase().indexOf(q) !== -1; });
+  var q = document.getElementById('mq').value.trim().toLowerCase(), std = document.getElementById('mstd').value;
+  var rows = MROWS.filter(function (r) { return (!q || r.join(' ').toLowerCase().indexOf(q) !== -1) && (!std || standingOf(r) === std); });
+  var nS = 0, nE = 0; MROWS.forEach(function (r) { var s = standingOf(r); if (s === 'SUSPENDED') nS++; else if (s === 'EXPELLED') nE++; });
   document.getElementById('mcount').textContent = rows.length + ' of ' + MROWS.length + ' members';
   document.getElementById('mstat').textContent = 'Sheet "' + (MSTAT.sheet || '?') + '": ' + (MSTAT.sheetRows || 0) +
-    ' row(s) · ' + MROWS.length + ' with Member ID · ' + (MSTAT.pending || 0) + ' pending (no ID yet)';
+    ' row(s) · ' + MROWS.length + ' with Member ID · ' + (MSTAT.pending || 0) + ' pending (no ID yet) · ' + nS + ' suspended · ' + nE + ' expelled';
   var body = rows.map(function (r) {
-    return '<tr>' + r.map(function (v, i) {
+    var st = standingOf(r), info = STAT[r[0]] || {}, cls = st === 'SUSPENDED' ? ' class="st-row-s"' : st === 'EXPELLED' ? ' class="st-row-e"' : '';
+    var cells = r.map(function (v, i) {
+      if (i === STIDX && st !== 'ACTIVE') {
+        var tip = (info.reason ? info.reason : '') + (info.at ? ' (' + info.at + (info.by ? ', by ' + info.by : '') + ')' : '');
+        return '<td><span class="st-b ' + (st === 'SUSPENDED' ? 'st-s' : 'st-e') + '" title="' + esc(tip) + '">' + esc(st) + '</span></td>';
+      }
       return '<td>' + (i === 0 ? '<a target="_top" href="' + 'Profile.html?id=' + encodeURIComponent(v) + '">' + esc(v) + '</a>' : esc(v)) + '</td>';
-    }).join('') + '</tr>';
+    }).join('');
+    var idq = esc(JSON.stringify(r[0]).replace(/"/g, "'"));
+    var act = st === 'ACTIVE'
+      ? '<button class="btn gray st-btn" onclick="openStatus(' + idq + ',\'Suspended\')">Suspend</button> <button class="btn red st-btn" onclick="openStatus(' + idq + ',\'Expelled\')">Expel</button>'
+      : '<button class="btn st-btn" onclick="openStatus(' + idq + ',\'Reinstated\')">Reinstate</button>';
+    return '<tr' + cls + '>' + cells + '<td style="white-space:nowrap">' + act + '</td></tr>';
   }).join('');
-  if (!body) body = '<tr><td colspan="' + MCOLS.length + '" style="padding:18px;color:#555">' +
+  if (!body) body = '<tr><td colspan="' + (MCOLS.length + 1) + '" style="padding:18px;color:#555">' +
     (MROWS.length ? 'No members match your search.' : 'No members with a Member ID yet. Members saved from the Sample form have no ID until you assign one in the Pending tab.') + '</td></tr>';
-  document.getElementById('mt').innerHTML = '<thead><tr>' + MCOLS.map(function (c) { return '<th>' + esc(c) + '</th>'; }).join('') + '</tr></thead><tbody>' + body + '</tbody>';
+  document.getElementById('mt').innerHTML = '<thead><tr>' + MCOLS.map(function (c) { return '<th>' + esc(c) + '</th>'; }).join('') + '<th>ACTION</th></tr></thead><tbody>' + body + '</tbody>';
 }
-document.getElementById('mq').oninput = drawMaster;
+document.getElementById('mq').oninput = drawMaster; document.getElementById('mstd').onchange = drawMaster;
+
+// ---- Suspended / Expelled / Reinstated ----
+function openStatus(id, action) {
+  var row = MROWS.filter(function (r) { return r[0] === id; })[0]; if (!row) return;
+  var name = (row[2] + ' ' + row[1]).trim(); ST_PENDING = { id: id, action: action };
+  document.getElementById('st-title').textContent = action === 'Suspended' ? 'Suspend member' : action === 'Expelled' ? 'Expel member' : 'Reinstate member';
+  document.getElementById('st-who').textContent = name + ' \u00b7 ' + id;
+  document.getElementById('st-lbl').textContent = action === 'Reinstated' ? 'Note (optional)' : 'Reason (required)';
+  var ok = document.getElementById('st-ok'); ok.textContent = action === 'Suspended' ? 'Suspend' : action === 'Expelled' ? 'Expel' : 'Reinstate'; ok.className = 'btn' + (action === 'Expelled' ? ' red' : '');
+  document.getElementById('st-reason').value = ''; document.getElementById('st-msg').textContent = ''; document.getElementById('st-modal').style.display = 'flex';
+  setTimeout(function () { document.getElementById('st-reason').focus(); }, 50);
+}
+function closeStatus() { document.getElementById('st-modal').style.display = 'none'; ST_PENDING = null; }
+document.getElementById('st-no').onclick = closeStatus;
+document.getElementById('st-ok').onclick = function () {
+  if (!ST_PENDING) return; var p = ST_PENDING, reason = document.getElementById('st-reason').value.trim(), msg = document.getElementById('st-msg');
+  if (p.action !== 'Reinstated' && reason.length < 5) { msg.style.color = '#991b1b'; msg.textContent = 'Please write the reason (at least 5 characters).'; return; }
+  var b = document.getElementById('st-ok'); b.disabled = true; msg.style.color = '#555'; msg.textContent = 'Saving...';
+  google.script.run.withSuccessHandler(function (r) {
+    b.disabled = false; if (r && r.expired) return expired();
+    if (!r || !r.success) { msg.style.color = '#991b1b'; msg.textContent = (r && r.message) || 'Could not save.'; return; }
+    closeStatus(); loadMaster();
+  }).withFailureHandler(function (e) { b.disabled = false; msg.style.color = '#991b1b'; msg.textContent = e.message || 'Could not save.'; }).memberSetStatus(TOKEN, p.id, p.action, reason);
+};
+document.getElementById('st-modal').addEventListener('click', function (e) { if (e.target === this) closeStatus(); });
+
+// ---- Excel export by chapter ----
+function loadXlsx(cb, fail) {
+  if (window.XLSX) return cb();
+  var sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+  sc.onload = cb; sc.onerror = fail; document.head.appendChild(sc);
+}
+function sheetName(name, used) {
+  var n = String(name).replace(/[\[\]:*?\/\\]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 31) || 'Sheet', base = n, k = 2;
+  while (used[n.toLowerCase()]) { n = base.slice(0, 28) + ' ' + (k++); } used[n.toLowerCase()] = 1; return n;
+}
+function toSheet(header, rows) {
+  var ws = XLSX.utils.aoa_to_sheet([header].concat(rows)), w = header.map(function (h, c) {
+    var m = String(h).length; rows.forEach(function (r) { var l = String(r[c] == null ? '' : r[c]).length; if (l > m) m = l; }); return { wch: Math.min(Math.max(m + 2, 8), 42) };
+  }); ws['!cols'] = w; return ws;
+}
+document.getElementById('mexp').onclick = function () {
+  var chosen = document.getElementById('mchap').value, msg = document.getElementById('mexpmsg'), btn = document.getElementById('mexp');
+  btn.disabled = true; msg.textContent = 'Preparing the file...';
+  var done = function (t) { btn.disabled = false; msg.textContent = t || ''; if (t) setTimeout(function () { if (msg.textContent === t) msg.textContent = ''; }, 8000); };
+  loadXlsx(function () {
+    google.script.run.withSuccessHandler(function (r) {
+      if (r && r.expired) return expired();
+      if (!r || !r.success) return done((r && r.message) || 'Could not export.');
+      try {
+        var cols = r.columns, ci = cols.indexOf('CHAPTER INITIATED'), si = cols.indexOf('STATUS'), li = cols.indexOf('LAST NAME'), fi = cols.indexOf('FIRST NAME');
+        var groups = {}; r.rows.forEach(function (row) { var k = chapKey(ci >= 0 ? row[ci] : ''); (groups[k] = groups[k] || []).push(row); });
+        var keys = Object.keys(groups).sort(function (a, b) { return a.localeCompare(b); });
+        if (chosen) keys = keys.filter(function (k) { return k === chosen; });
+        if (!keys.length) return done('No members found for that chapter.');
+        var byName = function (a, b) { return (String(a[li]) + String(a[fi])).localeCompare(String(b[li]) + String(b[fi])); };
+        var numbered = function (rows) { return rows.slice().sort(byName).map(function (row, i) { return [i + 1].concat(row); }); };
+        var head = ['#'].concat(cols), wb = XLSX.utils.book_new(), used = {};
+        if (!chosen) {
+          var sum = keys.map(function (k) { var g = groups[k], n = function (s) { return g.filter(function (row) { return String(row[si]).toUpperCase() === s; }).length; };
+            return [k, g.length, g.length - n('SUSPENDED') - n('EXPELLED'), n('SUSPENDED'), n('EXPELLED')]; });
+          var tot = sum.reduce(function (a, x) { return [a[0], a[1] + x[1], a[2] + x[2], a[3] + x[3], a[4] + x[4]]; }, ['TOTAL', 0, 0, 0, 0]);
+          XLSX.utils.book_append_sheet(wb, toSheet(['CHAPTER', 'MEMBERS', 'ACTIVE / OTHER', 'SUSPENDED', 'EXPELLED'], sum.concat([tot])), sheetName('Summary', used));
+        }
+        keys.forEach(function (k) { XLSX.utils.book_append_sheet(wb, toSheet(head, numbered(groups[k])), sheetName(k, used)); });
+        if (!chosen) { var all = []; keys.forEach(function (k) { all = all.concat(groups[k].slice().sort(byName).map(function (row) { return [k].concat(row); })); });
+          XLSX.utils.book_append_sheet(wb, toSheet(['CHAPTER (GROUP)'].concat(cols), all), sheetName('All Members', used)); }
+        var d = new Date(r.generatedAt ? r.generatedAt.replace(' ', 'T') : Date.now()), stamp = isNaN(d) ? '' : d.toISOString().slice(0, 10);
+        var fname = 'Members_' + (chosen ? chosen.replace(/[^A-Za-z0-9]+/g, '_').replace(/^_|_$/g, '') : 'by_Chapter') + (stamp ? '_' + stamp : '') + '.xlsx';
+        XLSX.writeFile(wb, fname); done('Downloaded ' + fname);
+      } catch (err) { done('Could not build the Excel file: ' + (err && err.message)); }
+    }).withFailureHandler(function (e) { done(e.message || 'Could not export.'); }).membersExport(TOKEN);
+  }, function () { done('The Excel tool could not be loaded. Check your connection and try again.'); });
+};
 </script>
 </section>
   <section id="v-pending" class="view"><div class="ph"><span class="phi"><i class="ico ico-pending"></i></span><div><h1>Pending Members</h1><p class="muted">Review new applications, then approve or decline them.</p></div></div>
