@@ -428,6 +428,7 @@ td a:hover{color:#000;border-bottom-style:solid}
 </style>
 <script src="gas-shim.js"></script>
 <script src="session.js"></script>
+<script src="export-tools.js"></script>
 <script>if (!tgpRequire(true)) { /* redirecting */ }</script>
 <script>
 const WEB_APP_URL = APPS_SCRIPT_URL, TOKEN = TGP_TOKEN, IS_ADMIN = !!TGP_INFO.admin;
@@ -512,6 +513,8 @@ tr.st-row-s td{background:#fffaf0}tr.st-row-e td{background:#fff5f5}
   <div class="ml-et"><i class="ico ico-download"></i> <b>Export to Excel by chapter</b></div>
   <select id="mchap" aria-label="Chapter to export"><option value="">All chapters (one sheet per chapter)</option></select>
   <button class="btn btn-ic ico-download" id="mexp" type="button">Export Excel</button>
+  <button class="btn dark btn-ic ico-download" id="mexpw" type="button">Export Word</button>
+  <button class="btn dark btn-ic ico-download" id="mexpp" type="button">Export PDF</button>
   <span id="mexpmsg" class="muted"></span>
 </div>
 <div class="wrap"><table id="mt"></table></div>
@@ -527,6 +530,7 @@ tr.st-row-s td{background:#fffaf0}tr.st-row-e td{background:#fff5f5}
   </div>
 </div>
 <script>
+var ADMINS = {}, MME = '';
 var MROWS = [], MCOLS = [], MSTAT = {}, STAT = {}, STIDX = -1, CHIDX = -1, ST_PENDING = null;
 var OLD_CH = { "st. vincent's college chapter inc chapter": "St Vincent's College Inc Chapter", "tau gamma sigma dipolog city chapter": "TGS Dipolog City Chapter",
   "triskelion league of elders zdn": "Triskelion League of Elders", "dipolog computer systems institute chapter": "Dipolog Computer System Inc Chapter (Inactive)",
@@ -547,7 +551,8 @@ function loadMaster() {
     .withSuccessHandler(function (r) {
       if (r && r.expired) return expired();
       if (!r || !r.success) { t.innerHTML = '<tr><td>' + esc((r && r.message) || 'The server returned no data. Redeploy a New version and try again.') + '</td></tr>'; return; }
-      MCOLS = r.columns; MROWS = r.rows; MSTAT = r.stats || {};
+      MCOLS = r.columns; MROWS = r.rows; MSTAT = r.stats || {}; MME = String(r.me || ''); ADMINS = {};
+      (r.flags || []).forEach(function (f, i) { if (f && f.admin && r.rows[i]) ADMINS[r.rows[i][0]] = 1; });
       STIDX = MCOLS.indexOf('STATUS'); CHIDX = MCOLS.indexOf('CHAPTER INITIATED'); fillChapters();
       google.script.run.withSuccessHandler(function (s) { STAT = (s && s.success && s.items) || {}; drawMaster(); })
         .withFailureHandler(function () { STAT = {}; drawMaster(); }).memberStatusInfo(TOKEN);
@@ -576,13 +581,15 @@ function drawMaster() {
         var tip = (info.reason ? info.reason : '') + (info.at ? ' (' + info.at + (info.by ? ', by ' + info.by : '') + ')' : '');
         return '<td><span class="st-b ' + (st === 'SUSPENDED' ? 'st-s' : 'st-e') + '" title="' + esc(tip) + '">' + esc(st) + '</span></td>';
       }
-      return '<td>' + (i === 0 ? '<a target="_top" href="' + 'Profile.html?id=' + encodeURIComponent(v) + '">' + esc(v) + '</a>' : esc(v)) + '</td>';
+      return '<td>' + (i === 0 ? '<a target="_top" href="' + 'Profile.html?id=' + encodeURIComponent(v) + '">' + esc(v) + '</a>' + (ADMINS[v] ? ' <span class="st-b" style="background:#111113;color:#e8cd6b">ADMIN</span>' : '') : esc(v)) + '</td>';
     }).join('');
     var idq = esc(JSON.stringify(r[0]).replace(/"/g, "'"));
     var act = st === 'ACTIVE'
       ? '<button class="btn gray st-btn" onclick="openStatus(' + idq + ',\'Suspended\')">Suspend</button> <button class="btn red st-btn" onclick="openStatus(' + idq + ',\'Expelled\')">Expel</button>'
       : '<button class="btn st-btn" onclick="openStatus(' + idq + ',\'Reinstated\')">Reinstate</button>';
-    return '<tr' + cls + '>' + cells + '<td style="white-space:nowrap">' + act + '</td></tr>';
+    var adm = ADMINS[r[0]] ? '<button class="btn gray st-btn" ' + (r[0] === MME ? 'disabled ' : '') + 'onclick="setAdmin(' + idq + ',false)">Remove Admin</button>'
+      : '<button class="btn dark st-btn" onclick="setAdmin(' + idq + ',true)">Make Admin</button>';
+    return '<tr' + cls + '>' + cells + '<td style="white-space:nowrap">' + act + ' ' + adm + '</td></tr>';
   }).join('');
   if (!body) body = '<tr><td colspan="' + (MCOLS.length + 1) + '" style="padding:18px;color:#555">' +
     (MROWS.length ? 'No members match your search.' : 'No members with a Member ID yet. Members saved from the Sample form have no ID until you assign one in the Pending tab.') + '</td></tr>';
@@ -614,6 +621,46 @@ document.getElementById('st-ok').onclick = function () {
   }).withFailureHandler(function (e) { b.disabled = false; msg.style.color = '#991b1b'; msg.textContent = e.message || 'Could not save.'; }).memberSetStatus(TOKEN, p.id, p.action, reason);
 };
 document.getElementById('st-modal').addEventListener('click', function (e) { if (e.target === this) closeStatus(); });
+
+// ---- Make Admin ----
+function setAdmin(id, on) {
+  var row = MROWS.filter(function (r) { return r[0] === id; })[0]; if (!row) return;
+  var who = (row[2] + ' ' + row[1]).trim() + ' (' + id + ')';
+  var msg = on ? 'Make ' + who + ' an ADMIN?\n\nAn Admin can open the Dashboard: Members Master List, approve or decline members, suspend or expel members, post announcements to everyone, and manage About Us, Officers, Gallery and Files.\n\nThe new Admin logs in on the Admin Log-in page with the Member ID as Username and the birthdate (YYYY-MM-DD) as Password.'
+    : 'Remove Admin access from ' + who + '?';
+  if (!confirm(msg)) return;
+  google.script.run.withSuccessHandler(function (r) {
+    if (r && r.expired) return expired();
+    if (r && r.success) loadMaster(); else alert((r && r.message) || 'Failed.');
+  }).withFailureHandler(function (e) { alert(e.message); }).setMemberAdmin(TOKEN, id, on);
+}
+
+// ---- Word / PDF export by chapter (same grouping and chapter choice as the Excel export) ----
+['mexpw', 'mexpp'].forEach(function (bid) {
+  document.getElementById(bid).onclick = function () {
+    var fmt = bid === 'mexpw' ? 'word' : 'pdf', chosen = document.getElementById('mchap').value, msg = document.getElementById('mexpmsg'), btns = [document.getElementById('mexp'), document.getElementById('mexpw'), document.getElementById('mexpp')];
+    var done = function (t) { btns.forEach(function (b) { b.disabled = false; }); msg.textContent = t || ''; if (t) setTimeout(function () { if (msg.textContent === t) msg.textContent = ''; }, 8000); };
+    btns.forEach(function (b) { b.disabled = true; }); msg.textContent = 'Preparing the file...';
+    google.script.run.withSuccessHandler(function (r) {
+      if (r && r.expired) return expired();
+      if (!r || !r.success) return done((r && r.message) || 'Could not export.');
+      var cols = r.columns, pick = ['MEMBER ID', 'LAST NAME', 'FIRST NAME', 'MIDDLE NAME', 'GENDER', 'STATUS', 'MOBILE', 'EMAIL'].map(function (c) { return cols.indexOf(c); }).filter(function (i) { return i >= 0; });
+      var ci = cols.indexOf('CHAPTER INITIATED'), li = cols.indexOf('LAST NAME'), fi = cols.indexOf('FIRST NAME'), groups = {};
+      r.rows.forEach(function (row) { var k = chapKey(ci >= 0 ? row[ci] : ''); (groups[k] = groups[k] || []).push(row); });
+      var keys = Object.keys(groups).sort(function (a, b) { return a.localeCompare(b); });
+      if (chosen) keys = keys.filter(function (k) { return k === chosen; });
+      if (!keys.length) return done('No members found for that chapter.');
+      var blocks = [];
+      keys.forEach(function (k) {
+        var g = groups[k].slice().sort(function (a, b) { return (String(a[li]) + String(a[fi])).localeCompare(String(b[li]) + String(b[fi])); });
+        blocks.push({ h: k + ' (' + g.length + ')' }, { table: { head: ['NO.'].concat(pick.map(function (i) { return cols[i]; })), rows: g.map(function (row, n) { return [String(n + 1)].concat(pick.map(function (i) { return String(row[i] == null || row[i] === '' ? (cols[i] === 'STATUS' ? 'ACTIVE' : '') : row[i]); })); }) } });
+      });
+      var model = { title: 'Members by Chapter', subtitle: (chosen || 'All chapters') + ' - generated ' + (r.generatedAt || '') + ' (Philippine time)', landscape: true, blocks: blocks };
+      var name = 'Members by Chapter - ' + (chosen || 'All chapters') + ' - ' + String(r.generatedAt || '').slice(0, 10);
+      (fmt === 'pdf' ? tgpPdf(model, name) : tgpWord(model, name)).then(function () { done('Done. Check your downloads.'); });
+    }).withFailureHandler(function (e) { done(e.message || 'Could not export.'); }).membersExport(TOKEN);
+  };
+});
 
 // ---- Excel export by chapter ----
 function loadXlsx(cb, fail) {
@@ -993,6 +1040,66 @@ function delAbout(i) {
   aCall(function (r) { if (r && r.success) loadAbout(); else amsg((r && r.message) || 'Failed.', false); }).deleteAboutSection(TOKEN, ASEC[i].id);
 }
 function moveAbout(i, d) { aCall(function () { loadAbout(); }).moveAboutSection(TOKEN, ASEC[i].id, d); }
+</script>
+<div class="ph" style="margin-top:34px"><span class="phi"><i class="ico ico-landmark"></i></span><div><h1>Officers &mdash; Council &amp; Chapters</h1><p class="muted">Shown in the “Officers” section of the About Us page, with the date each officer was elected into office.</p></div></div>
+<div class="bar"><button class="btn btn-ic ico-plus" type="button" onclick="offEdit(null)">Add Officer</button><button class="btn dark btn-ic ico-refresh" type="button" onclick="offLoad()">Refresh</button><span id="omsg" style="font-size:13px;font-weight:700"></span></div>
+<div class="box" id="oform" style="display:none">
+  <div id="oftitle" style="font:800 13px var(--font);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px">Add officer</div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px">
+    <div><label for="ob">Council or Chapter *</label><select id="ob"></select></div>
+    <div><label for="op">Position *</label><input id="op" maxlength="80" placeholder="e.g. Chairman, Vice Chairman, Secretary"></div>
+    <div><label for="on">Officer name *</label><input id="on" maxlength="120" placeholder="Full name"></div>
+    <div><label for="oi">Member ID (optional)</label><input id="oi" maxlength="30" placeholder="e.g. 7100-001-2006-00001"></div>
+    <div><label for="oe">Date elected *</label><input id="oe" type="date"></div>
+    <div><label for="ot">Term (optional)</label><input id="ot" maxlength="60" placeholder="e.g. 2026 - 2028"></div>
+    <div><label for="oo">Order (optional)</label><input id="oo" type="number" min="1" max="999" placeholder="1 = listed first"></div>
+  </div>
+  <div class="bar" style="margin:12px 0 0"><button class="btn btn-ic ico-save" id="osave" type="button">Save officer</button><button class="btn gray" id="ocancel" type="button">Cancel</button></div>
+</div>
+<div class="wrap"><table id="otbl"></table></div>
+<script>
+var OFF = [], OFFID = '', OFFCH = [], OFFCOUNCIL = 'Dipolog City Council';
+function omsg(t, ok) { var m = document.getElementById('omsg'); m.textContent = t || ''; m.style.color = ok ? '#166534' : '#991b1b'; }
+function offLoad() {
+  google.script.run.withSuccessHandler(function (r) {
+    if (r && r.expired) return expired();
+    if (!r || !r.success) { document.getElementById('otbl').innerHTML = '<tr><td>' + esc((r && r.message) || 'Could not load.') + '</td></tr>'; return; }
+    OFF = r.officers; OFFCH = r.chapters; OFFCOUNCIL = r.council;
+    document.getElementById('ob').innerHTML = [OFFCOUNCIL].concat(OFFCH).map(function (c) { return '<option>' + esc(c) + '</option>'; }).join('');
+    offDraw();
+  }).withFailureHandler(function (e) { omsg(e.message, false); }).getOfficers(TOKEN);
+}
+function offDraw() {
+  var rows = OFF.map(function (o, i) {
+    return '<tr><td>' + esc(o.body) + '</td><td>' + esc(o.position) + '</td><td>' + esc(o.name) + '</td><td>' + esc(o.elected) + '</td><td>' + esc(o.term) + '</td>' +
+      '<td style="white-space:nowrap"><button class="btn gray st-btn" onclick="offEdit(' + i + ')">Edit</button> <button class="btn red st-btn" onclick="offDel(' + i + ')">Delete</button></td></tr>';
+  }).join('') || '<tr><td colspan="6" style="padding:18px;color:#555">No officers posted yet.</td></tr>';
+  document.getElementById('otbl').innerHTML = '<thead><tr><th>COUNCIL / CHAPTER</th><th>POSITION</th><th>OFFICER</th><th>DATE ELECTED</th><th>TERM</th><th>ACTION</th></tr></thead><tbody>' + rows + '</tbody>';
+}
+function offEdit(i) {
+  var o = i == null ? null : OFF[i]; OFFID = o ? o.id : '';
+  document.getElementById('oftitle').textContent = o ? 'Edit officer' : 'Add officer';
+  document.getElementById('ob').value = o ? o.body : OFFCOUNCIL; document.getElementById('op').value = o ? o.position : ''; document.getElementById('on').value = o ? o.name : '';
+  document.getElementById('oi').value = o ? o.memberId : ''; document.getElementById('oe').value = o ? o.elected : ''; document.getElementById('ot').value = o ? o.term : ''; document.getElementById('oo').value = o && o.order ? o.order : '';
+  omsg('', true); document.getElementById('oform').style.display = 'block'; document.getElementById('oform').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+document.getElementById('ocancel').onclick = function () { document.getElementById('oform').style.display = 'none'; };
+document.getElementById('osave').onclick = function () {
+  var b = this, d = { id: OFFID, body: document.getElementById('ob').value, position: document.getElementById('op').value, name: document.getElementById('on').value,
+    memberId: document.getElementById('oi').value, elected: document.getElementById('oe').value, term: document.getElementById('ot').value, order: document.getElementById('oo').value };
+  b.disabled = true; omsg('Saving...', true);
+  google.script.run.withSuccessHandler(function (r) {
+    b.disabled = false; if (r && r.expired) return expired();
+    if (!r || !r.success) return omsg((r && r.message) || 'Could not save.', false);
+    document.getElementById('oform').style.display = 'none'; omsg('Saved.', true); offLoad();
+  }).withFailureHandler(function (e) { b.disabled = false; omsg(e.message, false); }).saveOfficer(TOKEN, d);
+};
+function offDel(i) {
+  var o = OFF[i]; if (!confirm('Delete ' + o.name + ' (' + o.position + ', ' + o.body + ') from the officers list?')) return;
+  google.script.run.withSuccessHandler(function (r) { if (r && r.expired) return expired(); if (r && r.success) { omsg('Deleted.', true); offLoad(); } else omsg((r && r.message) || 'Failed.', false); })
+    .withFailureHandler(function (e) { omsg(e.message, false); }).deleteOfficer(TOKEN, OFF[i].id);
+}
+offLoad();
 </script></section><section id="v-gallery" class="view"><div class="ph"><span class="phi"><i class="ico ico-gallery"></i></span><div><h1>Gallery</h1><p class="muted">Create albums for your projects and services. Members see the same albums after they log in.</p></div></div>
 <style>
 .gg{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
