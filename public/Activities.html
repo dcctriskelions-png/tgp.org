@@ -414,9 +414,11 @@ function card(a, i) {
   if (a.canManage) {
     h += '<button class="btn dark btn-ic ico-members" onclick="showAtt(' + i + ')">Attendees</button><button class="btn gray btn-ic ico-edit" onclick="editAct(' + i + ')">Edit</button>' +
       '<button class="btn gray btn-ic ' + (a.status === 'Cancelled' ? 'ico-undo' : 'ico-ban') + '" onclick="cancelAct(' + i + ')">' + (a.status === 'Cancelled' ? 'Restore' : 'Cancel') + '</button>';
+    h += '<button class="btn gray btn-ic ico-download" onclick="exportAct(' + i + ',\'xlsx\')">Export Excel</button><button class="btn gray btn-ic ico-file" onclick="exportAct(' + i + ',\'pdf\')">Export PDF</button>';
+    if (a.type === 'Meeting') h += '<button class="btn gray btn-ic ico-edit" onclick="minutesAct(' + i + ')">Minutes</button>';
     if (IS_ADMIN) h += '<button class="btn red btn-ic ico-trash" onclick="delAct(' + i + ')">Delete</button>';
   }
-  return h + '</div><div id="att-' + esc(a.id) + '"></div></div>';
+  return h + '</div><div id="att-' + esc(a.id) + '"></div><div id="min-' + esc(a.id) + '"></div></div>';
 }
 function renderList() {
   SHOW = SEL ? ACTS.filter(function (a) { return a.date === SEL; }) : ACTS;
@@ -537,5 +539,85 @@ function loadMine() {
 }
 
 loadMonth('');
+
+// ---- export (Excel / PDF) and Minutes of the Meeting: creator or admin only ----
+function loadXlsx(cb, fail) {
+  if (window.XLSX) return cb();
+  var sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+  sc.onload = cb; sc.onerror = fail; document.head.appendChild(sc);
+}
+function hm(x) { var p = String(x || '').split(' '); return p[1] ? fmtT(p[1].slice(0, 5)) : ''; }       // "2026-11-22 14:03" -> "2:03 PM"
+function safeName(t) { return String(t || 'Activity').replace(/[^A-Za-z0-9]+/g, '_').replace(/^_|_$/g, '').slice(0, 50) || 'Activity'; }
+function exportAct(i, kind) {
+  var a = SHOW[i]; say('Preparing the ' + (kind === 'pdf' ? 'PDF report' : 'Excel file') + '...', true);
+  call(function (r) {
+    if (!r || !r.success) return say((r && r.message) || 'Could not export this activity.', false);
+    if (kind === 'pdf') { printReport(r); say('', true); return; }
+    loadXlsx(function () { try { buildXlsx(r); say('Excel file downloaded.', true); } catch (e) { say('Could not build the Excel file: ' + (e && e.message), false); } },
+      function () { say('The Excel tool could not be loaded. Check your connection and try again.', false); });
+  }).actExportData(TOKEN, a.id);
+}
+function timeCell(x) { return hm(x) || '\u2014'; }
+function buildXlsx(r) {
+  var A = r.activity, wb = XLSX.utils.book_new();
+  var info = [['ACTIVITY REPORT', ''], ['', ''], ['Name of Activity', A.title], ['Type', A.type], ['Date', fmtD(A.date)], ['Time In (start)', fmtT(A.start)], ['Time Out (end)', fmtT(A.end)],
+    ['Venue', A.location || ''], ['Status', A.status || ''], ['Created by', A.createdBy || ''], ['Total attendees', r.total], ['Description', A.description || '']];
+  if (A.isMeeting) info.push(['Minutes of the Meeting', A.minutes ? 'See the "Minutes" sheet' : '(none recorded yet)']);
+  info.push(['', ''], ['Generated', (r.generatedAt || '') + (r.generatedBy ? ' by ' + r.generatedBy : '')]);
+  var w1 = XLSX.utils.aoa_to_sheet(info); w1['!cols'] = [{ wch: 24 }, { wch: 70 }]; XLSX.utils.book_append_sheet(wb, w1, 'Activity');
+  var rows = [['#', 'Name', 'Member ID', 'Time In', 'Time Out', 'Duration']];
+  r.attendees.forEach(function (x, n) { rows.push([n + 1, x.name, x.memberId, timeCell(x.timeIn), x.timeOut ? timeCell(x.timeOut) : 'No time out', x.timeOut ? fmtDur(x.minutes) : '\u2014']); });
+  var w2 = XLSX.utils.aoa_to_sheet(rows); w2['!cols'] = [{ wch: 5 }, { wch: 34 }, { wch: 22 }, { wch: 12 }, { wch: 14 }, { wch: 12 }]; XLSX.utils.book_append_sheet(wb, w2, 'Attendees');
+  if (A.isMeeting && A.minutes) {
+    var lines = [['MINUTES OF THE MEETING'], [A.title + ' \u2013 ' + fmtD(A.date)], ['']].concat(String(A.minutes).split('\n').map(function (l) { return [l]; }));
+    var w3 = XLSX.utils.aoa_to_sheet(lines); w3['!cols'] = [{ wch: 110 }]; XLSX.utils.book_append_sheet(wb, w3, 'Minutes');
+  }
+  XLSX.writeFile(wb, 'Activity_' + safeName(A.title) + '_' + A.date + '.xlsx');
+}
+function printReport(r) {
+  var A = r.activity, att = r.attendees.map(function (x, n) {
+    return '<tr><td>' + (n + 1) + '</td><td>' + esc(x.name) + '</td><td>' + esc(x.memberId) + '</td><td>' + esc(timeCell(x.timeIn)) + '</td><td>' + (x.timeOut ? esc(timeCell(x.timeOut)) : 'No time out') + '</td><td>' + (x.timeOut ? esc(fmtDur(x.minutes)) : '\u2014') + '</td></tr>';
+  }).join('') || '<tr><td colspan="6" style="text-align:center;color:#777">No attendees recorded.</td></tr>';
+  var row = function (k, v) { return '<tr><th>' + k + '</th><td>' + v + '</td></tr>'; };
+  var minutes = A.isMeeting ? '<h2>Minutes of the Meeting</h2><div class="min">' + (A.minutes ? esc(A.minutes) : '<i style="color:#777">No minutes recorded yet.</i>') + '</div>' : '';
+  var doc = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Activity Report - ' + esc(A.title) + '</title><style>' +
+    '@page{size:A4;margin:16mm}body{font:13px/1.45 Calibri,Arial,sans-serif;color:#1f1f26;margin:0}' +
+    '.top{border-top:6px solid #e8b83a;border-bottom:2px solid #16161c;padding:10px 0;margin-bottom:14px}.top b{font:700 12px Arial;letter-spacing:.12em;color:#16161c}.top div{font:11px Arial;color:#666;letter-spacing:.05em}' +
+    'h1{font:700 22px Georgia,serif;margin:0 0 10px}h2{font:700 15px Georgia,serif;margin:18px 0 6px;border-bottom:2px solid #e8b83a;padding-bottom:3px}' +
+    'table{border-collapse:collapse;width:100%}th,td{border:1px solid #cfcfd6;padding:6px 8px;text-align:left;vertical-align:top}th{background:#f6f0dc;width:28%;font-weight:700}' +
+    '.att th{width:auto;background:#16161c;color:#f3cf6b;font-size:12px}.att td{font-size:12.5px}.min{white-space:pre-wrap;border:1px solid #cfcfd6;border-left:4px solid #e8b83a;padding:10px 12px;background:#fffdf6}' +
+    '.foot{margin-top:18px;font-size:11px;color:#777;border-top:1px solid #ddd;padding-top:6px}tr{page-break-inside:avoid}</style></head><body>' +
+    '<div class="top"><b>\u03A4\u0393\u03A6 &amp; \u03A4\u0393\u03A3 &nbsp;\u2022&nbsp; DIPOLOG CITY COUNCIL</b><div>ACTIVITY REPORT</div></div>' +
+    '<h1>' + esc(A.title) + '</h1><table>' +
+    row('Type', esc(A.type)) + row('Date', esc(fmtD(A.date))) + row('Time In (start)', esc(fmtT(A.start))) + row('Time Out (end)', esc(fmtT(A.end))) + row('Venue', esc(A.location || '\u2014')) +
+    row('Status', esc(A.status || '')) + row('Created by', esc(A.createdBy || '')) + row('Description', esc(A.description || '\u2014')) + row('Total attendees', String(r.total)) + '</table>' +
+    '<h2>Attendees</h2><table class="att"><thead><tr><th>#</th><th>Name</th><th>Member ID</th><th>Time In</th><th>Time Out</th><th>Duration</th></tr></thead><tbody>' + att + '</tbody></table>' + minutes +
+    '<div class="foot">Generated ' + esc(r.generatedAt || '') + (r.generatedBy ? ' by ' + esc(r.generatedBy) : '') + '</div></body></html>';
+  var old = document.getElementById('rpt-frame'); if (old) old.remove();
+  var f = document.createElement('iframe'); f.id = 'rpt-frame'; f.setAttribute('aria-hidden', 'true'); f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0';
+  document.body.appendChild(f); var d = f.contentWindow.document; d.open(); d.write(doc); d.close();
+  setTimeout(function () { try { f.contentWindow.focus(); f.contentWindow.print(); } catch (e) { say('Printing is not available here. Use Export Excel instead.', false); } }, 400);
+}
+function minutesAct(i) {
+  var a = SHOW[i], box = $('min-' + a.id); if (!box) return;
+  if (box.innerHTML) { box.innerHTML = ''; return; }
+  box.innerHTML = '<div class="muted" style="margin-top:8px">Loading the minutes...</div>';
+  call(function (r) {
+    if (!r || !r.success) { box.innerHTML = ''; return say((r && r.message) || 'Could not load the minutes.', false); }
+    box.innerHTML = '<div style="margin-top:10px;border:1px solid #e5d9a8;border-left:4px solid #e8b83a;border-radius:10px;padding:10px;background:#fffdf6">' +
+      '<div style="font:700 12px Arial;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px">Minutes of the Meeting</div>' +
+      '<textarea id="mt-' + esc(a.id) + '" maxlength="30000" style="width:100%;box-sizing:border-box;min-height:170px;padding:10px;border:1px solid #d6d6dc;border-radius:8px;font:14px/1.45 Arial,sans-serif;resize:vertical" placeholder="Call to order, attendance, agenda, discussion, decisions, adjournment..."></textarea>' +
+      '<div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap"><button class="btn" id="mb-' + esc(a.id) + '" type="button">Save minutes</button><button class="btn gray" id="mc-' + esc(a.id) + '" type="button">Close</button><span id="mm-' + esc(a.id) + '" style="font-size:12.5px;font-weight:600"></span></div></div>';
+    var ta = $('mt-' + a.id); ta.value = r.activity.minutes || '';
+    $('mc-' + a.id).onclick = function () { box.innerHTML = ''; };
+    $('mb-' + a.id).onclick = function () {
+      var b = this, m = $('mm-' + a.id); b.disabled = true; m.style.color = '#555'; m.textContent = 'Saving...';
+      google.script.run.withSuccessHandler(function (x) {
+        b.disabled = false; if (x && x.expired) return goLogin();
+        m.style.color = x && x.success ? '#166534' : '#991b1b'; m.textContent = x && x.success ? 'Minutes saved.' : ((x && x.message) || 'Could not save.');
+      }).withFailureHandler(function (e) { b.disabled = false; m.style.color = '#991b1b'; m.textContent = e.message || 'Could not save.'; }).actSaveMinutes(TOKEN, a.id, ta.value);
+    };
+  }).actExportData(TOKEN, a.id);
+}
 </script>
 </body></html>
