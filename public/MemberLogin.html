@@ -199,6 +199,7 @@ body.auth .foot{color:var(--g500);margin-top:20px}
 <div class="foot">&copy; 2026 Tau Gamma Phi &amp; Tau Gamma Sigma &mdash; Dipolog City Council. All rights reserved.</div>
 <script src="gas-shim.js"></script>
 <script>
+try { var _n = sessionStorage.getItem('tgp_notice'); if (_n) { sessionStorage.removeItem('tgp_notice'); var _x = document.getElementById('msg'); _x.className = 'message error'; _x.textContent = _n; } } catch (e) {}
 if (new URLSearchParams(location.search).get('expired')) {
   const _m = document.getElementById('msg'); _m.className = 'message error'; _m.textContent = 'Your session expired. Please log in again.';
 }
