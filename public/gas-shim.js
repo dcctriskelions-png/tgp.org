@@ -38,6 +38,10 @@
               catch (x) { return fail('The server sent a web page instead of data. Check that the deployment is set to "Anyone" and that you deployed a New version.'); }
               clearTimeout(timer);
               console.log('[' + name + '] ' + Math.round((Date.now() - started) / 100) / 10 + 's');
+              if (j && j.ok && j.result && j.result.blocked && !/MemberLogin/.test(location.pathname)) {      // suspended or expelled: sign out and explain
+                try { sessionStorage.removeItem('tgp_token'); sessionStorage.removeItem('tgp_info'); sessionStorage.setItem('tgp_notice', j.result.message || 'Your membership is not active. Please contact the Admin.'); } catch (x) {}
+                location.href = 'MemberLogin.html'; return;
+              }
               if (j && j.ok) { if (onOk) onOk(j.result); }
               else fail((j && j.error) || 'Server error');
             })
