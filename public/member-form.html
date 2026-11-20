@@ -424,13 +424,8 @@ textarea{resize:vertical;min-height:84px}
     <div id="posContainer"></div>
     <button class="btn btn-add btn-ic ico-plus" onclick="addPosRow()">ADD POSITION</button></section>
     <section class="sec"><h2><span class="hb"><i class="ico ico-landmark"></i></span>CHAPTER / TAO / COUNCIL AFFILIATED</h2>
-    <div id="affContainer">
-      <div class="dynamic-row">
-        <input type="text" class="affInput" style="flex:1;" placeholder="e.g. Any Chapters in Dipolog City Council, Special Units like: TRILEG, T.L.E., etc.">
-        <button class="btn-remove" onclick="removeRow(this)"><i class="ico ico-x"></i></button>
-      </div>
-    </div>
-    <button class="btn btn-add btn-ic ico-plus" onclick="addRow('affContainer','affInput')">ADD AFFILIATION</button></section>
+    <div id="affContainer"></div>
+    <button type="button" class="btn btn-add btn-ic ico-plus" onclick="addAffRow()">ADD AFFILIATION</button></section>
     <section class="sec"><h2><span class="hb"><i class="ico ico-camera"></i></span>PHOTO</h2>
     <div>
       <input type="file" id="photoFile" accept="image/*" onchange="previewPhoto(this)">
@@ -460,6 +455,7 @@ textarea{resize:vertical;min-height:84px}
   </div>
 <div class="foot">&copy; 2026 Tau Gamma Phi &amp; Tau Gamma Sigma &mdash; Dipolog City Council. All Rights Reserved.</div>
 <script src="gas-shim.js"></script>
+<script src="aff-chapters.js"></script>
 <script>
 const _Q = new URLSearchParams(location.search);
 const EDIT_MODE = _Q.get('mode') === 'edit';
@@ -594,8 +590,6 @@ function checkPositions() {
 function resetPosRows() { document.getElementById('posContainer').innerHTML = ''; addPosRow(); }
 
 // ---- First affiliation row: a chapter dropdown when the member was Initiated Outside Dipolog City Council ----
-var AFF_PLACEHOLDER = 'This will be your Official Affiliate Chapter of DCC';
-var AFF_TEXT_PLACEHOLDER = 'e.g. Any Chapters in Dipolog City Council, Special Units like: TRILEG, T.L.E., etc.';
 function isOutsideDCC() { return /^initiated outside/i.test(document.getElementById('chapterInitiated').value || ''); }
 // ---- Root chapter text box: shown only when "Initiated Outside Dipolog City Council" is selected ----
 function rootChapterText() { var e = document.getElementById('rootChapterOutside'); return e ? e.value.trim().replace(/\s+/g, ' ') : ''; }
@@ -613,52 +607,11 @@ function setChapterInitiatedFromSaved(v) {   // restores a saved value, includin
   if (m) { setSelectCI('chapterInitiated', 'Initiated Outside Dipolog City Council'); syncRootOutside(); document.getElementById('rootChapterOutside').value = m[1].trim(); }
   else { setSelectCI('chapterInitiated', mapOldChapter(s)); syncRootOutside(); }
 }
-function affChapterList() {          // same list as Chapter Initiated, without "Initiated Outside..."
-  var list = [];
-  Array.prototype.forEach.call(document.getElementById('chapterInitiated').options, function (o) {
-    var t = o.textContent.trim();
-    if (t && o.value !== '' && !/^initiated outside/i.test(t)) list.push(t);
-  });
-  return list;
-}
 var OLD_CHAPTER_NAMES = { "st. vincent's college chapter inc chapter": "St Vincent's College Inc Chapter",
   "tau gamma sigma dipolog city chapter": "TGS Dipolog City Chapter", "triskelion league of elders zdn": "Triskelion League of Elders",
   "dipolog computer systems institute chapter": "Dipolog Computer System Inc Chapter (Inactive)",
   "dipolog city chapter now dip city council": "Dipolog City Chapter", "jose rizal memorial state university": "Jose Rizal Memorial State University Chapter" };
 function mapOldChapter(v) { var s = String(v == null ? '' : v).trim(); return OLD_CHAPTER_NAMES[s.replace(/\s*\(inactive\)\s*$/i, '').toLowerCase()] || s; }
-function setAffSelectValue(sel, val) {
-  var v = String(mapOldChapter(val) || '').trim().toUpperCase();
-  if (!v) { sel.selectedIndex = 0; return; }
-  for (var i = 0; i < sel.options.length; i++) {
-    if (sel.options[i].value.trim().toUpperCase() === v) { sel.selectedIndex = i; return; }
-  }
-  var extra = document.createElement('option');       // a saved value that is not in the list is kept, not lost
-  extra.value = extra.textContent = v; sel.appendChild(extra); sel.value = v;
-}
-function syncAffFirstRow() {
-  var c = document.getElementById('affContainer');
-  if (!c.querySelector('.dynamic-row')) addRow('affContainer', 'affInput');
-  var row = c.querySelector('.dynamic-row'), cur = row.querySelector('.affInput'), outside = isOutsideDCC();
-  var wasDisabled = cur.disabled;
-  if (outside && cur.tagName !== 'SELECT') {
-    var sel = document.createElement('select');
-    sel.className = 'affInput'; sel.style.flex = '1';
-    var ph = document.createElement('option'); ph.value = ''; ph.textContent = AFF_PLACEHOLDER; sel.appendChild(ph);
-    affChapterList().forEach(function (t) { var o = document.createElement('option'); o.value = o.textContent = t; sel.appendChild(o); });
-    setAffSelectValue(sel, cur.value);
-    sel.disabled = wasDisabled;
-    row.replaceChild(sel, cur);
-  } else if (!outside && cur.tagName === 'SELECT') {
-    var inp = document.createElement('input');
-    inp.type = 'text'; inp.className = 'affInput'; inp.style.flex = '1'; inp.placeholder = AFF_TEXT_PLACEHOLDER;
-    inp.value = cur.value; inp.disabled = wasDisabled;
-    row.replaceChild(inp, cur);
-  }
-  if (!outside) { var t = row.querySelector('.affInput'); if (t && t.tagName === 'INPUT' && !t.placeholder) t.placeholder = AFF_TEXT_PLACEHOLDER; }
-  var rm = row.querySelector('.btn-remove'); if (rm) rm.style.display = outside ? 'none' : '';
-}
-function firstAffValue() { var e = document.querySelector('#affContainer .affInput'); return e ? e.value.trim() : ''; }
-
 function addRow(cid, cls) {
   const c = document.getElementById(cid);
   const r = document.createElement('div');
@@ -688,8 +641,7 @@ function resetForm() {
   document.getElementById('existsLabel').style.display = 'none';
   document.getElementById('msg').className = 'message';
   resetPosRows();
-  document.getElementById('affContainer').innerHTML = '<div class="dynamic-row"><input type="text" class="affInput" style="flex:1;"><button class="btn-remove" onclick="removeRow(this)"><i class="ico ico-x"></i></button></div>';
-  syncAffFirstRow();
+  resetAff();
   syncRootOutside();
 }
 function photoMessage(text, type) {
@@ -794,10 +746,7 @@ function populateMemberForm(row) {
   if (row[18]) { document.getElementById('photoPreview').src = row[18]; document.getElementById('photoPreview').style.display = 'block'; }
   else document.getElementById('photoPreview').style.display = 'none';
   document.getElementById('employmentInfo').value = (row[19]||'').toString();
-  document.getElementById('affContainer').innerHTML = '';
-  (row[28]||'').toString().split(';').filter(Boolean).forEach(v => addPrefilledRow('affContainer','affInput',v));
-  if (!document.querySelector('#affContainer .affInput')) addRow('affContainer','affInput');
-  syncAffFirstRow();
+  populateAff(row[28], row[31]);
   syncRootOutside();
 }
 function searchMember() {
@@ -822,6 +771,7 @@ function saveRecord() {
   const btn = document.getElementById('saveBtn');
   btn.disabled = true;
   btn.textContent = EDIT_MODE ? 'UPDATING PROFILE...' : 'SAVING...';
+  const aff = collectAff();
   const data = {
     memberId: document.getElementById('memberId').value.trim(),
     editToken: EDIT_TOKEN,
@@ -845,7 +795,8 @@ function saveRecord() {
     positionHeld: collectPositions(),
     photoUrl: document.getElementById('photoUrl').value,
     employmentInfo: document.getElementById('employmentInfo').value.trim(),
-    chapterAffiliated: collectVals('affInput')
+    chapterAffiliated: aff.list,
+    activeChapters: aff.active
   };
   const posErr = checkPositions();
   if (posErr) {
@@ -862,6 +813,13 @@ function saveRecord() {
   }
   if (isOutsideDCC() && !firstAffValue()) {
     showMessage('SELECT YOUR OFFICIAL AFFILIATE CHAPTER OF DCC (first field under CHAPTER / TAO / COUNCIL AFFILIATED).', 'error');
+    btn.disabled = false;
+    btn.textContent = EDIT_MODE ? 'SAVE PROFILE UPDATES' : 'SAVE NEW MEMBER';
+    return;
+  }
+  const affErr = affError();
+  if (affErr) {
+    showMessage(affErr, 'error');
     btn.disabled = false;
     btn.textContent = EDIT_MODE ? 'SAVE PROFILE UPDATES' : 'SAVE NEW MEMBER';
     return;
