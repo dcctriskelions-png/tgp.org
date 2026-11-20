@@ -263,6 +263,11 @@ function goLogin() { tgpClear(); location.href = 'MemberLogin.html'; }
   <div id="aview">
     <div class="ph"><span class="phi"><i class="ico ico-about"></i></span><div><h1>About Us</h1><p class="muted">Who we are and what we stand for.</p></div></div>
     <div id="content">Loading...</div>
+    <section class="box" id="offBox"><h2><span class="hb"><i class="ico ico-landmark"></i></span>Officers</h2>
+      <p class="muted" style="margin:0 0 10px">Officers of the Council and of each Chapter, with the date they were elected into office.</p>
+      <div style="margin-bottom:12px"><label for="offFilter" style="display:block;font-weight:700;font-size:13px;margin-bottom:4px">Show</label><select id="offFilter" style="max-width:360px;width:100%"></select></div>
+      <div id="offList">Loading...</div>
+    </section>
   </div>
   <div id="gview" style="display:none">
     <div class="ph"><span class="phi"><i class="ico ico-gallery"></i></span><div><h1>Gallery</h1><p class="muted">Photos from our projects and services.</p></div></div>
@@ -323,6 +328,37 @@ google.script.run
   })
   .withFailureHandler(function (e) { document.getElementById('content').textContent = 'Error: ' + e.message; })
   .getAboutContent(TOKEN);
+var OFFS = [], OFFCOUNCIL = '';
+function offDate(d) {
+  var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(d || '')); if (!m) return esc(d || '');
+  var mo = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  return mo[+m[2] - 1] + ' ' + (+m[3]) + ', ' + m[1];
+}
+function offDraw() {
+  var f = document.getElementById('offFilter').value, list = OFFS.filter(function (o) { return !f || o.body === f; }), box = document.getElementById('offList');
+  if (!list.length) { box.innerHTML = '<p class="muted">No officers have been posted yet.</p>'; return; }
+  var groups = [], idx = {};
+  list.forEach(function (o) { if (idx[o.body] == null) { idx[o.body] = groups.length; groups.push({ body: o.body, items: [] }); } groups[idx[o.body]].items.push(o); });
+  box.innerHTML = groups.map(function (g) {
+    return '<h3 style="margin:16px 0 6px;font-size:15px">' + esc(g.body) + '</h3><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:14px"><thead><tr>' +
+      ['Position', 'Name', 'Date elected', 'Term'].map(function (h) { return '<th style="text-align:left;padding:7px 10px;border-bottom:2px solid #111113;white-space:nowrap">' + h + '</th>'; }).join('') + '</tr></thead><tbody>' +
+      g.items.map(function (o) {
+        return '<tr><td style="padding:7px 10px;border-bottom:1px solid #ddd;font-weight:700">' + esc(o.position) + '</td><td style="padding:7px 10px;border-bottom:1px solid #ddd">' + esc(o.name) + '</td><td style="padding:7px 10px;border-bottom:1px solid #ddd;white-space:nowrap">' + offDate(o.elected) + '</td><td style="padding:7px 10px;border-bottom:1px solid #ddd">' + esc(o.term || '') + '</td></tr>';
+      }).join('') + '</tbody></table></div>';
+  }).join('');
+}
+google.script.run
+  .withSuccessHandler(function (r) {
+    if (r && r.expired) return goLogin();
+    if (!r || !r.success) { document.getElementById('offList').textContent = (r && r.message) || 'Could not load officers.'; return; }
+    OFFS = r.officers || []; OFFCOUNCIL = r.council;
+    var seen = {}, opts = ['<option value="">All (Council and Chapters)</option>'];
+    OFFS.forEach(function (o) { if (!seen[o.body]) { seen[o.body] = 1; opts.push('<option value="' + esc(o.body) + '">' + esc(o.body) + '</option>'); } });
+    document.getElementById('offFilter').innerHTML = opts.join('');
+    document.getElementById('offFilter').onchange = offDraw; offDraw();
+  })
+  .withFailureHandler(function (e) { document.getElementById('offList').textContent = 'Error: ' + e.message; })
+  .getOfficers(TOKEN);
 var gLoaded = false;
 function showView(v) {
   document.getElementById('aview').style.display = v === 'a' ? 'block' : 'none';
