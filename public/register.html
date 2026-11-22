@@ -436,6 +436,30 @@ function showMessage(text, type) {
   box.className = 'message ' + type;
   window.scrollTo({top: 0, behavior: 'smooth'});
 }
+// Success message after a new member is saved: confirmation + what happens next.
+function showSaved(firstName) {
+  const box = document.getElementById('msg');
+  box.textContent = '';
+  const wrap = document.createElement('div');
+  const head = document.createElement('div');
+  head.textContent = 'SAVED SUCCESSFULLY — Thank you, ' + String(firstName || '').toUpperCase() + '! Your information has been recorded.';
+  const lead = document.createElement('div');
+  lead.style.cssText = 'margin-top:10px;font-weight:600;line-height:1.55';
+  lead.textContent = 'Please wait while the Administrator verifies your records. Once your membership is approved:';
+  const list = document.createElement('ul');
+  list.style.cssText = 'margin:6px 0 0;padding-left:20px;font-weight:500;line-height:1.6';
+  [
+    'Your Member ID Number will be sent to the email address you provided.',
+    'You will then be directed to apply for your Member ID card, and the applicable amount will be posted at that time.'
+  ].forEach(function (t) { const li = document.createElement('li'); li.textContent = t; list.appendChild(li); });
+  const tail = document.createElement('div');
+  tail.style.cssText = 'margin-top:8px;font-weight:500';
+  tail.textContent = 'Please stay tuned for updates.';
+  wrap.appendChild(head); wrap.appendChild(lead); wrap.appendChild(list); wrap.appendChild(tail);
+  box.appendChild(wrap);
+  box.className = 'message success';
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
 
 // ---- Position(s) held: position text + Year from / Year to (1968-2100) ----
 const POS_Y0 = 1968, POS_Y1 = 2100;
@@ -663,7 +687,7 @@ function saveRecord() {
         return;
       }
       resetForm(true);
-      showMessage('SAVED SUCCESSFULLY — Thank you, ' + data.firstName.toUpperCase() + '! Your information has been recorded.', 'success');
+      showSaved(data.firstName);
     })
     .withFailureHandler(function(err) {
       showMessage('SAVE ERROR: ' + ((err && err.message) || 'Unknown server error'), 'error');
