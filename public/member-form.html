@@ -338,8 +338,8 @@ textarea{resize:vertical;min-height:84px}
         <input type="tel" id="mobile">
       </div>
       <div class="col">
-        <label>EMAIL</label>
-        <input type="email" id="email">
+        <label>EMAIL *</label>
+        <input type="email" id="email" required placeholder="name@example.com">
       </div>
     </div></section>
     <section class="sec"><h2><span class="hb"><i class="ico ico-bolt"></i></span>FRATERNAL / SORORAL INFORMATION</h2>
@@ -420,12 +420,12 @@ textarea{resize:vertical;min-height:84px}
         <input type="text" id="ggDuringIR">
       </div>
     </div></section>
-    <section class="sec"><h2><span class="hb"><i class="ico ico-medal"></i></span>POSITIONS HELD AND YEARS</h2>
-    <div id="posContainer"></div>
-    <button class="btn btn-add btn-ic ico-plus" onclick="addPosRow()">ADD POSITION</button></section>
     <section class="sec"><h2><span class="hb"><i class="ico ico-landmark"></i></span>CHAPTER / TAO / COUNCIL AFFILIATED</h2>
     <div id="affContainer"></div>
     <button type="button" class="btn btn-add btn-ic ico-plus" onclick="addAffRow()">ADD AFFILIATION</button></section>
+    <section class="sec"><h2><span class="hb"><i class="ico ico-medal"></i></span>POSITIONS HELD AND YEARS</h2>
+    <div id="posContainer"></div>
+    <button class="btn btn-add btn-ic ico-plus" onclick="addPosRow()">ADD POSITION</button></section>
     <section class="sec"><h2><span class="hb"><i class="ico ico-camera"></i></span>PHOTO</h2>
     <div>
       <input type="file" id="photoFile" accept="image/*" onchange="previewPhoto(this)">
@@ -824,7 +824,7 @@ function saveRecord() {
     btn.textContent = EDIT_MODE ? 'SAVE PROFILE UPDATES' : 'SAVE NEW MEMBER';
     return;
   }
-  if (!data.lastName || !data.firstName || !data.mobile ||
+  if (!data.lastName || !data.firstName || !data.mobile || !data.email ||
       !data.alexisName || !data.batchName || !data.chapterInitiated ||
       !data.dateInitiated || !data.gltDuringIR || !data.mwwDuringIR) {
     showMessage('FILL ALL REQUIRED FIELDS FIRST', 'error');
@@ -832,6 +832,13 @@ function saveRecord() {
     btn.textContent = EDIT_MODE ? 'SAVE PROFILE UPDATES' : 'SAVE NEW MEMBER';
     return;
   }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+    showMessage('ENTER A VALID EMAIL ADDRESS (e.g. name@example.com).', 'error');
+    btn.disabled = false;
+    btn.textContent = EDIT_MODE ? 'SAVE PROFILE UPDATES' : 'SAVE NEW MEMBER';
+    return;
+  }
+
   const runner = google.script.run
     .withSuccessHandler(r => {
       if (!r || !r.success) {
