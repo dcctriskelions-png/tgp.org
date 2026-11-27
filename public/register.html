@@ -324,8 +324,8 @@ textarea{resize:vertical;min-height:84px}
     </div>
     <div class="row">
       <div class="col">
-        <label>EMAIL</label>
-        <input type="email" id="email">
+        <label>EMAIL *</label>
+        <input type="email" id="email" required placeholder="name@example.com">
       </div>
     </div></section>
     <section class="sec"><h2><span class="hb"><i class="ico ico-bolt"></i></span>FRATERNAL / SORORAL INFORMATION</h2>
@@ -406,12 +406,12 @@ textarea{resize:vertical;min-height:84px}
         <input type="text" id="ggDuringIR">
       </div>
     </div></section>
-    <section class="sec"><h2><span class="hb"><i class="ico ico-medal"></i></span>POSITIONS HELD AND YEARS</h2>
-    <div id="posContainer"></div>
-    <button type="button" class="btn btn-add btn-ic ico-plus" onclick="addPosRow()">ADD POSITION</button></section>
     <section class="sec"><h2><span class="hb"><i class="ico ico-landmark"></i></span>CHAPTER / TAO / COUNCIL AFFILIATED</h2>
     <div id="affContainer"></div>
     <button type="button" class="btn btn-add btn-ic ico-plus" onclick="addAffRow()">ADD AFFILIATION</button></section>
+    <section class="sec"><h2><span class="hb"><i class="ico ico-medal"></i></span>POSITIONS HELD AND YEARS</h2>
+    <div id="posContainer"></div>
+    <button type="button" class="btn btn-add btn-ic ico-plus" onclick="addPosRow()">ADD POSITION</button></section>
     <section class="sec"><h2><span class="hb"><i class="ico ico-camera"></i></span>PHOTO</h2>
     <div>
       <input type="file" id="photoFile" accept="image/*" onchange="previewPhoto(this)">
@@ -421,7 +421,7 @@ textarea{resize:vertical;min-height:84px}
     </div></section>
     <section class="sec"><h2><span class="hb"><i class="ico ico-briefcase"></i></span>EMPLOYMENT / SELF-EMPLOYMENT INFORMATION</h2>
     <textarea id="employmentInfo" rows="3" style="width:100%;" placeholder="Employer/Business - Position"></textarea></section>
-    <button type="button" class="btn btn-primary btn-ic ico-save" id="saveBtn" onclick="saveRecord()">SAVE NEW MEMBER</button>
+    <button type="button" class="btn btn-primary btn-ic ico-save" id="saveBtn" onclick="saveRecord()">REGISTER</button>
     <button type="button" class="btn btn-danger btn-ic ico-refresh" onclick="resetForm()">RESET</button>
   </div>
 
@@ -613,9 +613,9 @@ function previewPhoto(input) {
 
 function saveRecord() {
   const btn = document.getElementById('saveBtn');
-  const label = 'SAVE NEW MEMBER';
+  const label = 'REGISTER';
   btn.disabled = true;
-  btn.textContent = 'SAVING...';
+  btn.textContent = 'REGISTERING...';
 
   const aff = collectAff();
   const data = {
@@ -669,10 +669,17 @@ function saveRecord() {
     return;
   }
 
-  if (!data.lastName || !data.firstName || !data.mobile ||
+  if (!data.lastName || !data.firstName || !data.mobile || !data.email ||
       !data.alexisName || !data.batchName || !data.chapterInitiated ||
       !data.dateInitiated || !data.gltDuringIR || !data.mwwDuringIR) {
     showMessage('FILL ALL REQUIRED FIELDS FIRST', 'error');
+    btn.disabled = false;
+    btn.textContent = label;
+    return;
+  }
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+    showMessage('ENTER A VALID EMAIL ADDRESS (e.g. name@example.com).', 'error');
     btn.disabled = false;
     btn.textContent = label;
     return;
