@@ -3,11 +3,19 @@
      to the members of his / her own chapter or of other chapters (and delete the ones he / she posted).
    - Admins: the same, plus posting to ALL members, marking an announcement urgent, and deleting any announcement.
    Load AFTER gas-shim.js and session.js (it uses TGP_TOKEN, TGP_REAL and TGP_INFO from session.js). */
+/* The official DCC chapter list (same as the one in register.html). Add new chapters in both places. */
+window.TGP_CHAPTERS = ["Andres Bonifacio College Chapter", "Barra Community Chapter", "Biasong Community Chapter", "Central Community Chapter", "Cogon Community Chapter", "Dipolog City Institute of Technology Chapter (Inactive)", "Dipolog Computer System Inc Chapter (Inactive)", "Dicayas Community Chapter", "Dipolog City Chapter", "Diwan Community Chapter", "Dipolog Medical Center College Foundation Inc Chapter", "Estaka Community Chapter", "Galas Community Chapter", "Gulayon Community Chapter", "Igot Community Chapter (Inactive)", "Jose Rizal Memorial State University Chapter", "Lugdungan Community Chapter", "Minaog Community Chapter (Inactive)", "Miputak Community Chapter", "Olingan Community Chapter", "Punta Community Chapter", "Sangkol Community Chapter", "San Jose Community Chapter", "Sicayab Community Chapter", "Sinaman Community Chapter", "Sta. Filomena Community Chapter", "Sta. Isabel Community Chapter", "St Vincent's College Inc Chapter", "TGS Dipolog City Chapter", "Triskelion League of Elders", "Turno Community Chapter", "ZN TRILEG", "St. Vincent's College - TAO, Inc."];
+window.tgpAllChapters = function (fromServer) {
+  var out = (fromServer || []).slice();
+  window.TGP_CHAPTERS.forEach(function (c) { if (out.indexOf(c) === -1) out.push(c); });
+  return out;
+};
+
 (function () {
   if (typeof TGP_TOKEN === 'undefined' || !TGP_REAL) return;          // not logged in: nothing to show
   var POLL_MS = 90000, FRESH_MS = 45000;
   var seenKey = 'tgp_ann_seen_' + (TGP_INFO.admin ? 'admin' : (TGP_INFO.id || 'member'));
-  var items = [], canPost = true, canAll = !!TGP_INFO.admin, myCh = [], allCh = [], formOpen = false, lastLoad = 0, loading = false, open = false, loadError = '', panelSeen = '';
+  var items = [], canPost = true, canAll = !!TGP_INFO.admin, myCh = [], allCh = window.TGP_CHAPTERS.slice(), formOpen = false, lastLoad = 0, loading = false, open = false, loadError = '', panelSeen = '';
 
   function $(id) { return document.getElementById(id); }
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
@@ -227,7 +235,7 @@
     loading = true;
     google.script.run.withSuccessHandler(function (r) {
       loading = false; lastLoad = Date.now();
-      if (r && r.success) { items = r.items || []; canPost = r.canPost !== false; canAll = !!r.canPostAll; myCh = r.myChapters || []; allCh = r.allChapters || []; loadError = ''; try { sessionStorage.setItem('tgp_ann_cache', JSON.stringify({ t: lastLoad, items: items })); } catch (e) {} }
+      if (r && r.success) { items = r.items || []; canPost = r.canPost !== false; canAll = !!r.canPostAll; myCh = r.myChapters || []; allCh = window.tgpAllChapters(r.allChapters); loadError = ''; try { sessionStorage.setItem('tgp_ann_cache', JSON.stringify({ t: lastLoad, items: items })); } catch (e) {} }
       else if (!r || !r.expired) loadError = 'Could not load announcements. Please try again.';
       updateIndicator(); if (done) done();
     }).withFailureHandler(function () {
