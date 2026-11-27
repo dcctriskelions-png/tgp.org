@@ -244,7 +244,14 @@ body.app{display:flex;min-height:100vh}
 #formBox .vopt{display:flex;gap:10px;align-items:flex-start;margin:6px 0 0;padding:10px 12px;border:1px solid var(--g300);border-radius:10px;cursor:pointer;text-transform:none;letter-spacing:0;font:500 14px var(--font);color:var(--ink);background:#fff}
 #formBox .vopt input{width:auto;padding:0;margin:3px 0 0;flex:none;accent-color:#b08d1e}
 #formBox .vopt b{display:block;font:700 14px var(--font);letter-spacing:0;text-transform:none}#formBox .vopt small{display:block;color:var(--g600);font:500 12.5px var(--font);margin-top:2px}
-#formBox .vopt.on{border-color:var(--gold);background:var(--goldwash)}#formBox .vopt.off{opacity:.55;cursor:not-allowed}
+#formBox .vopt.on{border-color:var(--gold);background:var(--goldwash)}#formBox .vopt.off{background:var(--g100);border-style:dashed;cursor:not-allowed}
+.chtools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}.chtools .btn{padding:6px 12px;font-size:12px}
+.mc-list{max-height:380px;overflow:auto;display:flex;flex-direction:column;gap:8px;margin:12px 0;padding:10px;border:1px solid var(--g300);border-radius:10px;background:var(--g100)}
+.mc-msg{align-self:flex-start;max-width:85%;padding:9px 12px;border-radius:12px;background:#fff;border:1px solid var(--g300);color:var(--ink);overflow-wrap:anywhere}
+.mc-msg.me{align-self:flex-end;background:var(--goldwash);border-color:var(--gold)}
+.mc-meta{font-size:11.5px;color:var(--g600);margin-bottom:3px}.mc-text{white-space:pre-wrap;font-size:14px;line-height:1.45}
+.mc-del{background:none;border:0;padding:0 0 0 8px;color:#991b1b;font-size:11.5px;cursor:pointer;text-decoration:underline}
+#mcText,#mcTo{width:100%;box-sizing:border-box;margin:0 0 8px}#mcText{min-height:76px;resize:vertical}
 .chlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:4px 12px;max-height:230px;overflow:auto;margin-top:8px;padding:10px 12px;border:1px solid var(--g300);border-radius:10px;background:#fff}
 #formBox .chk{display:flex;gap:8px;align-items:center;margin:0;padding:4px 0;text-transform:none;letter-spacing:0;font:500 13px var(--font);color:var(--ink);cursor:pointer}
 #formBox .chk input{width:auto;padding:0;margin:0;flex:none;accent-color:#b08d1e}
@@ -301,7 +308,7 @@ body.app{display:flex;min-height:100vh}
         <label class="vopt" id="vo-CHAPTER"><input type="radio" name="fVis" value="CHAPTER"><span><b>2. My Chapter Members Only</b><small id="visMine">Private: only the members of your chapter see it.</small></span></label>
         <label class="vopt" id="vo-SELECTED"><input type="radio" name="fVis" value="SELECTED"><span><b>3. Selected Chapters Only</b><small>Only the members of the chapters you tick below see it.</small></span></label>
       </div>
-      <div id="chPick" style="display:none"><div class="chlist" id="chList"></div></div>
+      <div id="chPick" style="display:none"><div class="chtools"><button type="button" class="btn dark" id="chAll">Select all</button><button type="button" class="btn gray" id="chNone">Clear</button><span class="muted" id="chCount"></span></div><div class="chlist" id="chList"></div></div>
       <div class="acts"><button class="btn btn-ic ico-save" id="fSave">Save Activity</button><button class="btn gray" id="fCancel">Cancel</button></div>
       <div id="fMsg" style="margin-top:10px;font-size:14px;font-weight:bold"></div>
     </div>
@@ -317,7 +324,15 @@ body.app{display:flex;min-height:100vh}
 
   <div id="vChap" style="display:none">
     <div class="box"><div class="muted">These are the members of your chapter, shown by Last Name, First Name and Middle Name only. A member appears here after ticking <b>“I am now Active here”</b> for the chapter in Edit Your Member Profile.</div>
-      <div class="acts"><button class="btn btn-ic ico-send" id="chapAnn">Send announcement to my chapter</button><button class="btn dark btn-ic ico-refresh" id="chapRef">Refresh</button></div></div>
+      <div class="acts"><button class="btn dark btn-ic ico-refresh" id="chapRef">Refresh</button></div></div>
+    <div class="box" id="mcBox">
+      <b>Chapter Messaging Center</b>
+      <div class="muted">Messages here are seen by the members of the chapter you send to.</div>
+      <div class="mc-list" id="mcList" aria-live="polite"></div>
+      <select id="mcTo" aria-label="Send to chapter" style="display:none"></select>
+      <textarea id="mcText" maxlength="1500" placeholder="Write a message to your chapter..." aria-label="Message"></textarea>
+      <div class="acts"><button class="btn btn-ic ico-send" id="mcSend">Send</button><span class="muted" id="mcNote"></span></div>
+    </div>
     <div id="chapBox" class="muted">Loading...</div>
   </div>
   <div id="vMine" style="display:none">
@@ -357,7 +372,7 @@ if (!IS_ADMIN) { $('tabMine').style.display = ''; $('tabChap').style.display = '
 function tab(which) {
   $('vCal').style.display = which === 'c' ? 'block' : 'none'; $('vMine').style.display = which === 'm' ? 'block' : 'none'; $('vChap').style.display = which === 'h' ? 'block' : 'none';
   $('tabCal').classList.toggle('on', which === 'c'); $('tabMine').classList.toggle('on', which === 'm'); $('tabChap').classList.toggle('on', which === 'h');
-  if (which === 'h') loadChapter();
+  if (which === 'h') { loadChapter(); loadMessages(true); }
   if (which === 'm') loadMine();
 }
 $('tabCal').onclick = function () { tab('c'); }; $('tabMine').onclick = function () { tab('m'); }; $('tabChap').onclick = function () { tab('h'); };
@@ -375,7 +390,7 @@ function loadMonth(ym) {
     if (!r || !r.success) return say((r && r.message) || 'Could not load activities.', false);
     YM = r.ym; NOW = r.now; ACTS = r.activities;
     if (r.types && r.types.length) { TYPES = r.types; fillTypes(); }
-    MY_CH = r.myChapters || []; ALL_CH = r.allChapters || [];
+    MY_CH = r.myChapters || []; ALL_CH = r.allChapters || [];   // merged with the full list when the form opens
     if (SEL && SEL.slice(0, 7) !== YM) SEL = '';
     render();
   }).getActivities(TOKEN, ym || YM);
@@ -564,14 +579,19 @@ function syncVis() {
   $('chPick').style.display = v === 'SELECTED' ? 'block' : 'none';
 }
 function setVis(vis, chapters, existing) {
-  $('chList').innerHTML = ALL_CH.map(function (c) { return '<label class="chk"><input type="checkbox" value="' + esc(c) + '"' + ((chapters || []).indexOf(c) !== -1 ? ' checked' : '') + '> ' + esc(c) + '</label>'; }).join('') || '<span class="muted">The chapter list is not loaded yet. Please reopen the form.</span>';
+  $('chList').innerHTML = (window.tgpAllChapters ? window.tgpAllChapters(ALL_CH) : ALL_CH).map(function (c) { return '<label class="chk"><input type="checkbox" value="' + esc(c) + '"' + ((chapters || []).indexOf(c) !== -1 ? ' checked' : '') + '> ' + esc(c) + '</label>'; }).join('') || '<span class="muted">The chapter list is not loaded yet. Please reopen the form.</span>';
   var blocked = !MY_CH.length && !(existing && existing.visibility === 'CHAPTER');         // not Active in any chapter: option 2 cannot work
   var r2 = document.querySelector('input[name=fVis][value=CHAPTER]'); r2.disabled = blocked; $('vo-CHAPTER').classList.toggle('off', blocked);
   $('visMine').textContent = MY_CH.length ? 'Private: only members Active in ' + MY_CH.join(', ') + ' see it.'
     : (IS_ADMIN ? 'Admin accounts have no chapter. Use option 1 or 3.' : 'Not available yet: in Edit Your Member Profile, add your chapter and tick “I am now Active here”.');
   document.querySelector('input[name=fVis][value=' + (blocked && vis === 'CHAPTER' ? 'ALL' : (vis || 'ALL')) + ']').checked = true;
-  syncVis();
+  syncVis(); countPicked();
 }
+function countPicked() { $('chCount').textContent = $('chList').querySelectorAll('input:checked').length + ' of ' + $('chList').querySelectorAll('input').length + ' ticked'; }
+function tickAll(on) { Array.prototype.forEach.call($('chList').querySelectorAll('input'), function (c) { c.checked = on; }); countPicked(); }
+$('chList').onchange = countPicked;
+$('chAll').onclick = function () { tickAll(true); };
+$('chNone').onclick = function () { tickAll(false); };
 Array.prototype.forEach.call(document.querySelectorAll('input[name=fVis]'), function (r) { r.onchange = syncVis; });
 
 // ---- Word version of the activity report / attendance sheet (uses the same data as Export Excel / PDF) ----
@@ -598,8 +618,51 @@ function loadChapter() {
     }).join('');
   }).getChapterMembers(TOKEN, '');
 }
-$('chapRef').onclick = loadChapter;
-$('chapAnn').onclick = function () { var b = document.getElementById('an-bell'); if (b) b.click(); else say('The announcement bell is still loading. Try again in a moment.', false); };
+$('chapRef').onclick = function () { loadChapter(); loadMessages(); };
+
+// ---- chapter messaging center (uses the announcement service: each message is an announcement to a chapter) ----
+var MC_CH = [], MC_BUSY = false;
+function mcNote(t, bad) { $('mcNote').textContent = t; $('mcNote').style.color = bad ? '#991b1b' : ''; }
+function mcTime(iso) { var d = new Date(iso); return isNaN(d) ? String(iso) : d.toLocaleString('en-PH', { timeZone: 'Asia/Manila', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); }
+function loadMessages(toBottom) {
+  call(function (r) {
+    var list = $('mcList');
+    if (!r || !r.success) { if (!list.children.length) list.innerHTML = '<div class="muted">Could not load messages. Tap Refresh.</div>'; return; }
+    MC_CH = r.myChapters || [];
+    var keep = $('mcTo').value;
+    $('mcTo').innerHTML = MC_CH.map(function (c) { return '<option>' + esc(c) + '</option>'; }).join('');
+    if (MC_CH.indexOf(keep) !== -1) $('mcTo').value = keep;
+    $('mcTo').style.display = MC_CH.length > 1 ? '' : 'none';
+    $('mcSend').disabled = MC_BUSY || !MC_CH.length; $('mcText').disabled = !MC_CH.length;
+    var msgs = (r.items || []).filter(function (x) { return x.audience === 'CHAPTERS' && (x.chapters || []).some(function (c) { return MC_CH.indexOf(c) !== -1; }); })
+      .sort(function (x, y) { return x.created > y.created ? 1 : x.created < y.created ? -1 : 0; });
+    var atEnd = list.scrollHeight - list.scrollTop - list.clientHeight < 40;
+    list.innerHTML = msgs.map(function (x) {
+      return '<div class="mc-msg' + (x.canDelete ? ' me' : '') + '"><div class="mc-meta"><b>' + esc(x.by || 'Member') + '</b> · ' + esc(mcTime(x.created)) + ' · ' + esc((x.chapters || []).join(', ')) +
+        (x.canDelete ? '<button type="button" class="mc-del" data-id="' + esc(x.id) + '">Delete</button>' : '') + '</div>' +
+        (x.title && x.title !== 'Chapter message' ? '<b>' + esc(x.title) + '</b>' : '') + '<div class="mc-text">' + esc(x.message) + '</div></div>';
+    }).join('') || '<div class="muted">' + (MC_CH.length ? 'No messages yet. Start the conversation below.' : 'Join a chapter (tick “I am now Active here”) to use messaging.') + '</div>';
+    if (toBottom || atEnd) list.scrollTop = list.scrollHeight;
+  }).getAnnouncements(TOKEN);
+}
+$('mcList').onclick = function (e) {
+  var id = e.target.getAttribute('data-id');
+  if (!id || !confirm('Delete this message for everyone?')) return;
+  call(function (r) { if (r && r.success) loadMessages(); else mcNote((r && r.message) || 'Could not delete.', true); }).deleteAnnouncement(TOKEN, id);
+};
+$('mcSend').onclick = function () {
+  var text = $('mcText').value.trim(), to = $('mcTo').value;
+  if (MC_BUSY || !to) return;
+  if (!text) { mcNote('Write a message first.', true); return; }
+  MC_BUSY = true; $('mcSend').disabled = true; mcNote('Sending...');
+  function done(msg, bad) { MC_BUSY = false; $('mcSend').disabled = false; mcNote(msg, bad); }
+  google.script.run.withSuccessHandler(function (r) {
+    if (r && r.expired) return goLogin();
+    if (!r || !r.success) return done((r && r.message) || 'Could not send.', true);
+    $('mcText').value = ''; done('Sent.'); loadMessages(true);
+  }).withFailureHandler(function (e) { done(e.message || 'Could not send.', true); }).postAnnouncement(TOKEN, 'Chapter message', text, false, 'CHAPTERS', [to]);
+};
+setInterval(function () { if (!document.hidden && $('vChap').style.display === 'block') loadMessages(); }, 30000);
 
 // ---- my attendance ----
 function loadMine() {
