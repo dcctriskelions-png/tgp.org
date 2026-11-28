@@ -489,6 +489,129 @@ tr.st-row-s td{background:#fffaf0}tr.st-row-e td{background:#fff5f5}
 .st-card textarea{width:100%;box-sizing:border-box;min-height:90px;padding:10px;border:1px solid var(--g300);border-radius:10px;font:14px var(--font);resize:vertical}
 #st-msg{min-height:18px;font-size:12.5px;font-weight:600;margin:6px 0}.st-acts{display:flex;gap:8px;justify-content:flex-end}
 </style>
+<style id="desktop-polish">
+/* =====================================================================
+   DESKTOP POLISH - bigger web-browser layout + flash motion.
+   Colors are untouched: everything uses the page's own gold / black / paper variables.
+   Sizing applies to browsers (821px and wider); the phone layout is not changed.
+   ===================================================================== */
+@keyframes dp-shine{0%{transform:translateX(-140%) skewX(-20deg)}45%,100%{transform:translateX(260%) skewX(-20deg)}}
+@keyframes dp-sweep{from{transform:translateX(-120%)}to{transform:translateX(120%)}}
+@keyframes dp-pop{0%{transform:scale(.55) rotate(-16deg);opacity:0}60%{transform:scale(1.14) rotate(4deg);opacity:1}100%{transform:none;opacity:1}}
+@keyframes dp-wiggle{0%{transform:none}25%{transform:scale(1.28) rotate(-12deg)}55%{transform:scale(1.28) rotate(9deg)}100%{transform:scale(1.12)}}
+@keyframes dp-breathe{0%,100%{filter:drop-shadow(0 0 0 rgba(232,205,107,0))}50%{filter:drop-shadow(0 0 7px rgba(232,205,107,.95))}}
+@keyframes dp-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+@keyframes dp-grow{from{width:0}to{width:128px}}
+@keyframes dp-seal{0%,24%,100%{box-shadow:0 0 0 1.5px rgba(212,175,55,.6),0 2px 6px rgba(0,0,0,.35)}
+  9%{box-shadow:0 0 0 2.5px var(--gold2),0 0 22px 5px rgba(232,205,107,.75),0 2px 6px rgba(0,0,0,.35)}}
+@keyframes dp-seal-shine{0%,2%{transform:translateX(-140%) skewX(-20deg)}16%,100%{transform:translateX(260%) skewX(-20deg)}}
+@keyframes dp-ping{0%{box-shadow:0 0 0 0 rgba(232,205,107,.75)}70%,100%{box-shadow:0 0 0 10px rgba(232,205,107,0)}}
+@keyframes dp-online{0%{box-shadow:0 0 0 0 rgba(232,205,107,.55)}70%,100%{box-shadow:0 0 0 9px rgba(232,205,107,0)}}
+@keyframes dp-modal{from{transform:translateY(14px) scale(.96);opacity:0}to{transform:none;opacity:1}}
+
+/* ---------- size: web browser ---------- */
+@media(min-width:821px){
+  body{font-size:15px}
+  .muted{font-size:14px}
+  #side{width:304px;padding:28px 18px 20px}
+  .brand{padding:0 4px 22px;margin-bottom:18px}
+  .brand .logos{gap:8px;margin-bottom:14px}
+  .brand .lg{width:56px;height:56px}
+  .brand b{font-size:15px;letter-spacing:.1em}
+  .brand small{font-size:12.5px;margin-top:4px}
+  .who{padding:12px 14px;margin-bottom:18px;border-radius:14px;font-size:14.5px;gap:12px}
+  .who .av{width:38px;height:38px;font-size:17px}
+  .who em{font-size:10.5px;padding:4px 10px}
+  .nav{padding:14px 16px;gap:14px;margin-bottom:6px;border-radius:13px;font-size:15px}
+  .nav .ico{font-size:23px}
+  .nav .badge{font-size:12.5px;min-width:28px;padding:2px 10px}
+  #side .navs #out{min-height:54px;padding:14px 16px;font-size:15px;border-radius:13px;gap:14px}
+  #main{padding:42px 56px 60px;max-width:1480px}
+  .ph{gap:18px;margin-bottom:30px;padding-bottom:24px}
+  .phi{width:66px;height:66px;border-radius:18px;font-size:31px}
+  .ph h1{font-size:31px}
+  .ph .muted{font-size:14.5px}
+  .btn{padding:13px 22px;font-size:14px;border-radius:12px}
+  label{font-size:12px}
+  input,select,textarea{padding:13px 15px;font-size:15px;border-radius:12px}
+  select{padding-right:40px}
+  .searchbox{max-width:460px}
+  .searchbox input{padding-left:46px}
+  .searchbox .ico{left:16px;font-size:19px}
+  .ml-tools{gap:12px;margin-bottom:14px}
+  .ml-tools select,.ml-export select{padding:12px 15px;font-size:14px;border-radius:12px}
+  .ml-export{padding:14px 16px;gap:12px;border-radius:14px}
+  .ml-tools{align-items:center}
+  .ml-tools .searchbox{flex:1 1 340px}
+  .ml-tools select{width:auto;min-width:210px}
+  .ml-export select{width:auto;flex:1 1 320px;max-width:460px}
+  .ml-et{font-size:14px}
+  .chip{font-size:13px;padding:7px 14px}
+  th{padding:15px 16px;font-size:11.5px}
+  td{padding:14px 16px}
+  table{font-size:14px}
+  .box,.card{padding:26px 30px;border-radius:16px}
+  .wrap{border-radius:16px}
+  .message{font-size:14.5px;padding:14px 16px}
+  .note{font-size:14px;padding:15px 18px}
+  .st-card{max-width:500px;padding:26px}
+}
+
+/* ---------- flash motion (skipped when the visitor asks for reduced motion) ---------- */
+@media(prefers-reduced-motion:no-preference){
+
+  /* the four seals: a golden flash travels across them every few seconds */
+  .lg{position:relative;overflow:hidden;animation:dp-seal 7s ease-in-out infinite}
+  .lg::after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.7) 50%,transparent 65%);transform:translateX(-140%) skewX(-20deg);animation:dp-seal-shine 7s ease-in-out infinite}
+  .logos .lg:nth-child(2),.logos .lg:nth-child(2)::after{animation-delay:.35s}
+  .logos .lg:nth-child(3),.logos .lg:nth-child(3)::after{animation-delay:.7s}
+  .logos .lg:nth-child(4),.logos .lg:nth-child(4)::after{animation-delay:1.05s}
+
+  /* signed-in badge: soft gold ring */
+  .who .av{animation:dp-online 3s ease-out infinite}
+
+  /* side menu: icon pop on hover, glowing icon on the open page (all screens) */
+  .nav .ico,.nav .an-ico{transition:color .15s,filter .2s}
+  .nav:hover .ico,.nav:hover .an-ico{animation:dp-wiggle .55s ease forwards;filter:drop-shadow(0 0 7px rgba(232,205,107,.9))}
+  .nav.on .ico{animation:dp-breathe 2.8s ease-in-out infinite}
+  .nav.on:hover .ico{animation:dp-wiggle .55s ease forwards}
+  #out:hover .ico{filter:drop-shadow(0 0 7px rgba(255,160,160,.9))}
+
+  /* page header: icon pops in and keeps a slow shine; the gold line draws itself on every page change */
+  .phi{position:relative;overflow:hidden}
+  .phi::after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,transparent 35%,rgba(232,205,107,.55) 50%,transparent 65%);transform:translateX(-140%) skewX(-20deg);animation:dp-shine 5s ease-in-out 1.2s infinite}
+  .phi .ico{animation:dp-float 3.4s ease-in-out infinite}
+  .view.on .phi{animation:dp-pop .65s cubic-bezier(.2,.9,.3,1.25) both}
+  .view.on .ph::after{animation:dp-grow .75s .2s cubic-bezier(.2,.8,.2,1) both}
+  .view.on .ph h1{animation:fade .45s .1s ease both}
+
+  /* buttons: gold shine sweeps over on hover, icon inside nudges */
+  .btn{position:relative;overflow:hidden}
+  .btn::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.38) 50%,transparent 70%);transform:translateX(-130%)}
+  .btn.gray::after,.btn.ghost::after,.btn-secondary::after{background:linear-gradient(105deg,transparent 30%,rgba(212,175,55,.28) 50%,transparent 70%)}
+  .btn:not(:disabled):hover::after{animation:dp-sweep .65s ease}
+  .btn:not(:disabled):hover{transform:translateY(-1px);box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 8px 18px -8px rgba(138,109,20,.7)}
+  .btn:not(:disabled):active{transform:translateY(1px)}
+  .btn-ic::before{transition:transform .2s}
+  .btn-ic:not(:disabled):hover::before{animation:dp-wiggle .5s ease forwards}
+
+  /* tables, search, dialogs */
+  tbody tr td{transition:background .15s,box-shadow .15s}
+  tbody tr:hover td:first-child{box-shadow:inset 4px 0 0 var(--gold)}
+  .searchbox .ico{transition:color .2s,transform .25s}
+  .searchbox:focus-within .ico{color:var(--golddk);transform:translateY(-50%) scale(1.2) rotate(-8deg)}
+  .chip .ico,.note .ico{animation:dp-float 3.4s ease-in-out infinite}
+  .st-card{animation:dp-modal .28s cubic-bezier(.2,.9,.3,1.2)}
+}
+
+/* desktop menu: light sweep across the row on hover + pulsing Pending badge */
+@media(min-width:821px) and (prefers-reduced-motion:no-preference){
+  .nav{overflow:hidden}
+  .nav::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(100deg,transparent 25%,rgba(232,205,107,.26) 50%,transparent 75%);transform:translateX(-120%)}
+  .nav:hover::after{animation:dp-sweep .7s ease}
+  .nav .badge.has{animation:dp-ping 1.8s ease-out infinite}
+}
+</style>
 </head>
 <body class="app">
 <aside id="side">
@@ -1224,5 +1347,13 @@ if (IS_ADMIN) {
   if (typeof loadAbout === 'function') loadAbout();
   if (typeof loadGallery === 'function') loadGallery();
 }
+</script>
+<script>
+/* Pending badge: shows a pulsing gold ring only while somebody is waiting for a Member ID */
+(function () {
+  var b = document.getElementById('pcount'); if (!b) return;
+  function sync() { b.classList.toggle('has', (parseInt(b.textContent, 10) || 0) > 0); }
+  sync(); new MutationObserver(sync).observe(b, { childList: true, characterData: true, subtree: true });
+})();
 </script>
 </body></html>
